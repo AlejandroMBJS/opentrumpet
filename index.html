@@ -1,712 +1,2052 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Teoría Musical</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@300;400;600&family=Cinzel:wght@400;600;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@300;400;600&family=Cinzel:wght@400;600;900&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --gold: #C9A84C;
-      --gold-light: #E8C96A;
-      --cream: #F5ECD7;
-      --dark: #0D0B07;
-      --dark2: #161209;
-      --dark3: #1E1810;
-      --accent: #8B1A1A;
+      --gold: #C9A84C; --gold-light: #E8C96A; --gold-dim: #7a6228;
+      --cream: #F5ECD7; --dark: #0A0806; --dark2: #131009;
+      --dark3: #1C1710; --accent: #8B1A1A;
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--dark); color: var(--cream); font-family: 'JetBrains Mono', monospace; min-height: 100vh; overflow-x: hidden; }
 
-    * { box-sizing: border-box; }
+    /* SCROLL PROGRESS */
+    #scroll-bar { position:fixed; top:0; left:0; height:2px; width:0%; background:linear-gradient(to right,var(--gold-dim),var(--gold-light)); z-index:1000; transition:width 0.1s linear; }
 
-    body {
-      background-color: var(--dark);
-      color: var(--cream);
-      font-family: 'JetBrains Mono', monospace;
-      min-height: 100vh;
-      overflow-x: hidden;
+    /* BACKGROUND */
+    .bg-fixed { position:fixed; inset:0; pointer-events:none; z-index:0; }
+    .bg-fixed::before {
+      content:''; position:absolute; inset:0;
+      background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 30px,rgba(201,168,76,0.055) 30px,rgba(201,168,76,0.055) 31px,transparent 31px,transparent 37px,rgba(201,168,76,0.055) 37px,rgba(201,168,76,0.055) 38px,transparent 38px,transparent 44px,rgba(201,168,76,0.055) 44px,rgba(201,168,76,0.055) 45px,transparent 45px,transparent 51px,rgba(201,168,76,0.055) 51px,rgba(201,168,76,0.055) 52px,transparent 52px,transparent 58px,rgba(201,168,76,0.055) 58px,rgba(201,168,76,0.055) 59px,transparent 59px,transparent 130px);
     }
+    .bg-fixed::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 15% 40%,rgba(139,26,26,0.09) 0%,transparent 55%),radial-gradient(ellipse at 85% 15%,rgba(201,168,76,0.06) 0%,transparent 50%); }
 
-    /* Staff lines background */
-    .staff-bg {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-    .staff-bg::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent 28px,
-        rgba(201,168,76,0.06) 28px,
-        rgba(201,168,76,0.06) 29px,
-        transparent 29px,
-        transparent 34px,
-        rgba(201,168,76,0.06) 34px,
-        rgba(201,168,76,0.06) 35px,
-        transparent 35px,
-        transparent 40px,
-        rgba(201,168,76,0.06) 40px,
-        rgba(201,168,76,0.06) 41px,
-        transparent 41px,
-        transparent 46px,
-        rgba(201,168,76,0.06) 46px,
-        rgba(201,168,76,0.06) 47px,
-        transparent 47px,
-        transparent 52px,
-        rgba(201,168,76,0.06) 52px,
-        rgba(201,168,76,0.06) 53px,
-        transparent 53px,
-        transparent 120px
-      );
-    }
-    .staff-bg::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 20% 50%, rgba(139,26,26,0.07) 0%, transparent 60%),
-                  radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.05) 0%, transparent 50%);
-    }
+    /* LAYOUT */
+    .page-wrap { position:relative; z-index:1; max-width:980px; margin:0 auto; padding:0 1.25rem 5rem; }
 
-    .page-wrap {
-      position: relative;
-      z-index: 1;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem 4rem;
-    }
+    /* NAV DOTS */
+    #nav-dots { position:fixed; right:1.2rem; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:10px; z-index:100; }
+    .nav-dot { width:7px; height:7px; border-radius:50%; background:rgba(201,168,76,0.2); border:1px solid rgba(201,168,76,0.35); cursor:pointer; transition:all 0.3s; position:relative; }
+    .nav-dot:hover,.nav-dot.active { background:var(--gold); box-shadow:0 0 8px rgba(201,168,76,0.5); transform:scale(1.35); }
+    .nav-dot::before { content:attr(data-label); position:absolute; right:16px; top:50%; transform:translateY(-50%); background:var(--dark3); border:1px solid rgba(201,168,76,0.3); color:var(--gold); font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.15em; padding:3px 8px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 0.2s; border-radius:2px; }
+    .nav-dot:hover::before { opacity:1; }
 
-    /* Hero */
-    .hero-title {
-      font-family: 'Cinzel', serif;
-      font-weight: 900;
-      letter-spacing: 0.15em;
-      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, #a07030 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-    }
+    /* HERO */
+    .hero-title { font-family:'Cinzel',serif; font-weight:900; letter-spacing:0.12em; background:linear-gradient(135deg,#ffe89a 0%,var(--gold) 40%,#7a5520 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:0.95; }
+    .hero-sub { font-family:'Playfair Display',serif; font-style:italic; color:rgba(245,236,215,0.4); letter-spacing:0.3em; }
 
-    .hero-subtitle {
-      font-family: 'Playfair Display', serif;
-      font-style: italic;
-      color: rgba(245,236,215,0.45);
-      letter-spacing: 0.25em;
-    }
+    /* CARD */
+    .card { background:linear-gradient(145deg,rgba(28,23,16,0.92) 0%,rgba(15,12,7,0.97) 100%); border:1px solid rgba(201,168,76,0.18); border-radius:3px; position:relative; overflow:hidden; transition:border-color 0.3s; }
+    .card:hover { border-color:rgba(201,168,76,0.3); }
+    .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(to right,transparent,var(--gold),transparent); }
+    .cc { position:absolute; width:12px; height:12px; border-color:rgba(201,168,76,0.4); }
+    .cc.tl{top:7px;left:7px;border-top:1px solid;border-left:1px solid} .cc.tr{top:7px;right:7px;border-top:1px solid;border-right:1px solid}
+    .cc.bl{bottom:7px;left:7px;border-bottom:1px solid;border-left:1px solid} .cc.br{bottom:7px;right:7px;border-bottom:1px solid;border-right:1px solid}
+    .sec-label { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.4em; color:var(--gold); }
+    .sec-title { font-family:'Cinzel',serif; font-weight:600; color:var(--gold-light); letter-spacing:0.07em; }
+    .divider { height:1px; background:linear-gradient(to right,transparent,rgba(201,168,76,0.4),transparent); }
 
-    .divider {
-      height: 1px;
-      background: linear-gradient(to right, transparent, var(--gold), transparent);
-      margin: 0.5rem 0;
-      opacity: 0.5;
-    }
+    /* METRONOME */
+    #metro-btn { width:54px; height:54px; border-radius:50%; background:rgba(201,168,76,0.1); border:2px solid rgba(201,168,76,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; font-size:1.3rem; color:var(--cream); }
+    #metro-btn:hover { background:rgba(201,168,76,0.2); border-color:var(--gold); }
+    #metro-btn.playing { border-color:var(--gold); }
+    #metro-btn.beat { background:rgba(201,168,76,0.32); box-shadow:0 0 18px rgba(201,168,76,0.4); }
+    #metro-btn.beat-accent { background:rgba(220,50,50,0.28); border-color:#e05050; box-shadow:0 0 18px rgba(220,50,50,0.4); }
+    .bpm-display { font-family:'Cinzel',serif; font-size:2.2rem; font-weight:900; color:var(--gold-light); line-height:1; }
+    .bpm-lbl { font-size:0.56rem; color:rgba(201,168,76,0.5); letter-spacing:0.25em; margin-top:2px; }
+    .bpm-slider { -webkit-appearance:none; width:100%; height:3px; background:rgba(201,168,76,0.15); border-radius:2px; outline:none; cursor:pointer; }
+    .bpm-slider::-webkit-slider-thumb { -webkit-appearance:none; width:15px; height:15px; border-radius:50%; background:var(--gold); cursor:pointer; box-shadow:0 0 8px rgba(201,168,76,0.4); transition:transform 0.15s; }
+    .bpm-slider::-webkit-slider-thumb:hover { transform:scale(1.3); }
+    .beat-pip { width:10px; height:10px; border-radius:50%; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.2); transition:all 0.05s; }
+    .beat-pip.lit { background:var(--gold); box-shadow:0 0 8px rgba(201,168,76,0.6); }
+    .beat-pip.lit-accent { background:#e05050; box-shadow:0 0 8px rgba(220,50,50,0.5); }
 
-    /* Section Cards */
-    .card {
-      background: linear-gradient(135deg, rgba(30,24,16,0.9) 0%, rgba(20,16,8,0.95) 100%);
-      border: 1px solid rgba(201,168,76,0.2);
-      border-radius: 2px;
-      position: relative;
-      overflow: hidden;
-    }
+    /* TIMER */
+    .timer-display { font-size:1.5rem; color:var(--cream); letter-spacing:0.1em; }
+    .tbtn { padding:0.22rem 0.7rem; border:1px solid rgba(201,168,76,0.3); font-family:'Cinzel',serif; font-size:0.56rem; letter-spacing:0.18em; color:rgba(201,168,76,0.7); cursor:pointer; transition:all 0.2s; background:transparent; border-radius:2px; }
+    .tbtn:hover { background:rgba(201,168,76,0.12); border-color:var(--gold); color:var(--gold-light); }
 
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(to right, transparent, var(--gold), transparent);
-    }
+    /* PIANO MULTI-OCTAVE */
+    .piano-scroll { overflow-x:auto; padding-bottom:6px; }
+    .piano-scroll::-webkit-scrollbar { height:3px; }
+    .piano-scroll::-webkit-scrollbar-thumb { background:rgba(201,168,76,0.3); border-radius:2px; }
+    .piano-outer { position:relative; display:inline-flex; height:100px; user-select:none; min-width:100%; }
+    .octave-block { position:relative; display:flex; height:100%; border-right:2px solid rgba(201,168,76,0.25); }
+    .octave-label { position:absolute; top:-18px; left:0; font-family:'Cinzel',serif; font-size:0.52rem; color:rgba(201,168,76,0.5); letter-spacing:0.1em; white-space:nowrap; }
+    .key-white { width:32px; height:100%; background:linear-gradient(to bottom,#e8dcc8,#f5ead6); border:1px solid rgba(0,0,0,0.2); border-radius:0 0 5px 5px; cursor:pointer; position:relative; transition:background 0.08s; flex-shrink:0; }
+    .key-white:hover,.key-white.lit { background:linear-gradient(to bottom,#e8c96a,#c9a84c); }
+    .key-white .kl { position:absolute; bottom:5px; left:50%; transform:translateX(-50%); font-family:'Cinzel',serif; font-size:0.42rem; color:rgba(0,0,0,0.3); pointer-events:none; white-space:nowrap; }
+    .key-white.lit .kl { color:rgba(0,0,0,0.55); font-weight:700; }
+    .key-white.do-key { background:linear-gradient(to bottom,#f0e2cc,#faf0e0); }
+    .key-white.do-key.lit { background:linear-gradient(to bottom,#ffe066,#c9a84c); }
+    .black-row { position:absolute; top:0; left:0; right:0; height:60%; pointer-events:none; display:flex; }
+    .bk-sp { flex-shrink:0; }
+    .bk-slot { flex-shrink:0; display:flex; justify-content:center; }
+    .key-black { width:22px; height:100%; background:linear-gradient(to bottom,#1e1610,#0a0806); border-radius:0 0 4px 4px; cursor:pointer; position:relative; pointer-events:all; transition:background 0.08s; border-bottom:3px solid rgba(0,0,0,0.6); box-shadow:1px 2px 4px rgba(0,0,0,0.5); }
+    .key-black:hover,.key-black.lit { background:linear-gradient(to bottom,#c9a84c,#8a6a20); box-shadow:none; }
+    .key-black .kl { position:absolute; bottom:5px; left:50%; transform:translateX(-50%); font-family:'Cinzel',serif; font-size:0.36rem; color:rgba(255,255,255,0.18); pointer-events:none; white-space:nowrap; }
+    .key-black.lit .kl { color:rgba(0,0,0,0.5); }
 
-    .card-corner {
-      position: absolute;
-      width: 14px; height: 14px;
-      border-color: var(--gold);
-      opacity: 0.5;
-    }
-    .card-corner.tl { top: 6px; left: 6px; border-top: 1px solid; border-left: 1px solid; }
-    .card-corner.tr { top: 6px; right: 6px; border-top: 1px solid; border-right: 1px solid; }
-    .card-corner.bl { bottom: 6px; left: 6px; border-bottom: 1px solid; border-left: 1px solid; }
-    .card-corner.br { bottom: 6px; right: 6px; border-bottom: 1px solid; border-right: 1px solid; }
+    /* NOTE PILLS */
+    .note-pill { display:inline-flex; flex-direction:column; align-items:center; background:rgba(201,168,76,0.07); border:1px solid rgba(201,168,76,0.22); border-radius:3px; padding:0.3rem 0.5rem; min-width:50px; transition:all 0.2s; cursor:pointer; }
+    .note-pill:hover { background:rgba(201,168,76,0.18); border-color:rgba(201,168,76,0.6); transform:translateY(-2px); box-shadow:0 4px 14px rgba(201,168,76,0.15); }
+    .note-pill .nn { font-family:'Cinzel',serif; font-weight:600; font-size:0.8rem; color:var(--cream); }
+    .note-pill .np { font-size:0.56rem; color:var(--gold); margin-top:2px; }
+    .note-pill.sharp .nn { color:var(--gold-light); }
+    .note-pill.sharp { border-color:rgba(201,168,76,0.38); }
+    .note-pill.highlight { background:rgba(201,168,76,0.3); border-color:var(--gold); transform:translateY(-3px); box-shadow:0 6px 20px rgba(201,168,76,0.25); }
 
-    .section-label {
-      font-family: 'Cinzel', serif;
-      font-size: 0.65rem;
-      letter-spacing: 0.35em;
-      color: var(--gold);
-      text-transform: uppercase;
-    }
+    /* OCTAVE TABS */
+    .oct-tabs { display:flex; gap:3px; flex-wrap:wrap; margin-bottom:1rem; }
+    .oct-tab { padding:0.2rem 0.75rem; border:1px solid rgba(201,168,76,0.2); font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.15em; color:rgba(201,168,76,0.55); cursor:pointer; transition:all 0.2s; border-radius:2px; }
+    .oct-tab:hover { border-color:rgba(201,168,76,0.5); color:var(--gold); }
+    .oct-tab.active { background:rgba(201,168,76,0.18); border-color:var(--gold); color:var(--gold-light); }
+    .oct-panel { display:none; } .oct-panel.active { display:block; }
 
-    .section-title {
-      font-family: 'Cinzel', serif;
-      font-weight: 600;
-      color: var(--gold-light);
-      letter-spacing: 0.08em;
-    }
+    /* CHROMATIC FULL GRID */
+    .chrom-all-wrap { overflow-x:auto; padding-bottom:4px; }
+    .chrom-all-wrap::-webkit-scrollbar { height:3px; }
+    .chrom-all-wrap::-webkit-scrollbar-thumb { background:rgba(201,168,76,0.3); border-radius:2px; }
+    .chrom-all-table { border-collapse:separate; border-spacing:2px; }
+    .chrom-all-table th { font-family:'Cinzel',serif; font-size:0.5rem; letter-spacing:0.1em; color:rgba(201,168,76,0.45); padding:0.3rem 0.4rem; text-align:center; border-bottom:1px solid rgba(201,168,76,0.15); white-space:nowrap; }
+    .chrom-all-table th.oct-header { color:var(--gold); font-size:0.58rem; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.2); border-radius:2px; }
+    .chrom-all-table td { font-size:0.65rem; text-align:center; padding:0.3rem 0.45rem; border:1px solid rgba(201,168,76,0.08); border-radius:2px; background:rgba(20,16,8,0.6); transition:all 0.15s; cursor:pointer; white-space:nowrap; min-width:42px; }
+    .chrom-all-table td:hover { background:rgba(201,168,76,0.14); border-color:rgba(201,168,76,0.4); }
+    .chrom-all-table td.cs { color:var(--gold-light); background:rgba(201,168,76,0.1); }
+    .chrom-all-table td.clit { background:rgba(201,168,76,0.35) !important; border-color:var(--gold) !important; font-weight:700; color:var(--dark) !important; box-shadow:0 0 8px rgba(201,168,76,0.3); }
+    .chrom-all-table td .note-n { font-family:'Cinzel',serif; display:block; font-size:0.65rem; }
+    .chrom-all-table td .note-p { display:block; font-size:0.46rem; color:rgba(201,168,76,0.55); margin-top:1px; }
+    .chrom-all-table td.oct-cell { font-family:'Cinzel',serif; font-weight:700; color:var(--gold-light); background:rgba(201,168,76,0.12); border-color:rgba(201,168,76,0.25); font-size:0.72rem; cursor:default; }
+    .chrom-all-table td.oct-cell:hover { background:rgba(201,168,76,0.12); border-color:rgba(201,168,76,0.25); }
 
-    /* Note pills */
-    .note-pill {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      background: rgba(201,168,76,0.08);
-      border: 1px solid rgba(201,168,76,0.25);
-      border-radius: 2px;
-      padding: 0.35rem 0.6rem;
-      min-width: 52px;
-      transition: all 0.2s ease;
-      cursor: default;
-    }
-    .note-pill:hover {
-      background: rgba(201,168,76,0.18);
-      border-color: rgba(201,168,76,0.6);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(201,168,76,0.15);
-    }
-    .note-pill .note-name {
-      font-family: 'Cinzel', serif;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: var(--cream);
-    }
-    .note-pill .note-pos {
-      font-size: 0.6rem;
-      color: var(--gold);
-      margin-top: 2px;
-      font-family: 'JetBrains Mono', monospace;
-      opacity: 0.9;
-    }
-    .note-pill.sharp .note-name { color: var(--gold-light); }
-    .note-pill.sharp { border-color: rgba(201,168,76,0.4); }
+    /* PIANO SCROLL */
+    .piano-scroll-wrap { overflow-x:auto; padding-bottom:6px; padding-top:22px; }
+    .piano-scroll-wrap::-webkit-scrollbar { height:3px; }
+    .piano-scroll-wrap::-webkit-scrollbar-thumb { background:rgba(201,168,76,0.3); border-radius:2px; }
+    .piano-outer { position:relative; display:inline-flex; height:100px; user-select:none; }
+    .octave-block { position:relative; display:flex; height:100%; border-right:2px solid rgba(201,168,76,0.3); width:224px; flex-shrink:0; }
+    .octave-block:last-child { border-right:none; width:32px; } /* last block is just the final C */
+    .octave-block-label { position:absolute; top:-18px; left:2px; font-family:'Cinzel',serif; font-size:0.5rem; color:rgba(201,168,76,0.5); letter-spacing:0.08em; pointer-events:none; }
 
-    /* Cifrado pills */
-    .cifrado-pair {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-    .note-es {
-      font-family: 'Cinzel', serif;
-      font-size: 0.9rem;
-      color: var(--cream);
-    }
-    .note-en {
-      font-size: 0.7rem;
-      color: var(--gold);
-      font-weight: 600;
-    }
+    /* CIFRADO */
+    .cifrado-pair { display:flex; flex-direction:column; align-items:center; gap:2px; padding:0.4rem 0.6rem; border:1px solid rgba(201,168,76,0.1); border-radius:3px; transition:all 0.2s; }
+    .cifrado-pair:hover { border-color:rgba(201,168,76,0.4); background:rgba(201,168,76,0.06); }
+    .note-es { font-family:'Cinzel',serif; font-size:0.88rem; color:var(--cream); }
+    .note-en { font-size:0.66rem; color:var(--gold); font-weight:600; }
 
-    /* Exercise items */
-    .exercise-item {
-      border-left: 2px solid rgba(201,168,76,0.3);
-      padding-left: 1rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .exercise-item:hover {
-      border-left-color: var(--gold);
-      background: rgba(201,168,76,0.04);
-    }
-    .exercise-item .ex-number {
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      color: var(--gold);
-      letter-spacing: 0.2em;
-    }
-    .exercise-notes {
-      font-size: 0.72rem;
-      line-height: 1.8;
-      color: rgba(245,236,215,0.75);
-      word-break: break-word;
-    }
-    .exercise-notes .n {
-      display: inline-block;
-      background: rgba(201,168,76,0.08);
-      border: 1px solid rgba(201,168,76,0.15);
-      border-radius: 2px;
-      padding: 0 4px;
-      margin: 1px;
-      color: var(--cream);
-      font-size: 0.7rem;
-      transition: background 0.15s;
-    }
-    .exercise-notes .n.s {
-      color: var(--gold-light);
-      background: rgba(201,168,76,0.13);
-      border-color: rgba(201,168,76,0.3);
-    }
-    .exercise-notes .dash {
-      opacity: 0.3;
-      margin: 0 1px;
-    }
+    /* EXERCISES */
+    .exercise-item { border:1px solid rgba(201,168,76,0.1); border-left:3px solid rgba(201,168,76,0.22); border-radius:3px; padding:0.8rem 1rem; cursor:pointer; transition:all 0.25s; background:rgba(201,168,76,0.02); }
+    .exercise-item:hover { border-left-color:rgba(201,168,76,0.6); background:rgba(201,168,76,0.05); }
+    .exercise-item.active { border-left-color:var(--gold); background:rgba(201,168,76,0.07); border-color:rgba(201,168,76,0.25); }
+    .ex-num { font-family:'Cinzel',serif; font-size:0.57rem; letter-spacing:0.25em; color:rgba(201,168,76,0.55); margin-bottom:0.4rem; }
+    .ex-notes-wrap { font-size:0.68rem; line-height:2.1; }
+    .en { display:inline-block; border:1px solid rgba(201,168,76,0.12); border-radius:2px; padding:1px 5px; margin:1px; color:var(--cream); background:rgba(201,168,76,0.06); transition:all 0.15s; cursor:default; }
+    .en.s { color:var(--gold-light); background:rgba(201,168,76,0.12); border-color:rgba(201,168,76,0.28); }
+    .en.cur { background:var(--gold); color:var(--dark); border-color:var(--gold); box-shadow:0 0 10px rgba(201,168,76,0.4); font-weight:700; transform:scale(1.12); }
+    .en.done { opacity:0.3; }
+    .ed { color:rgba(201,168,76,0.18); margin:0 1px; }
+    .player-controls { display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-top:0.6rem; }
+    .pc-btn { padding:0.2rem 0.6rem; border:1px solid rgba(201,168,76,0.25); font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.12em; color:rgba(201,168,76,0.7); cursor:pointer; transition:all 0.2s; background:transparent; border-radius:2px; }
+    .pc-btn:hover { background:rgba(201,168,76,0.15); border-color:var(--gold); color:var(--gold-light); }
+    .pc-btn.on { background:rgba(201,168,76,0.2); border-color:var(--gold); color:var(--gold-light); }
+    .note-cursor { font-family:'Cinzel',serif; font-size:0.68rem; color:var(--gold); margin-left:auto; }
+    .fig-badge { padding:0.22rem 0.6rem; border:1px solid rgba(201,168,76,0.25); font-family:'Cinzel',serif; font-size:0.53rem; letter-spacing:0.12em; color:rgba(201,168,76,0.6); cursor:pointer; transition:all 0.2s; border-radius:2px; }
+    .fig-badge:hover { background:rgba(201,168,76,0.1); color:var(--gold); }
+    .fig-badge.active { background:rgba(201,168,76,0.18); border-color:var(--gold); color:var(--gold-light); }
 
-    /* Scales table */
-    .scale-table {
-      border-collapse: separate;
-      border-spacing: 3px;
-      width: 100%;
-    }
-    .scale-table th {
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
-      color: var(--gold);
-      padding: 0.4rem 0.5rem;
-      text-align: center;
-      background: rgba(201,168,76,0.08);
-      border-bottom: 1px solid rgba(201,168,76,0.2);
-    }
-    .scale-table td {
-      font-size: 0.72rem;
-      padding: 0.3rem 0.4rem;
-      text-align: center;
-      background: rgba(30,24,16,0.6);
-      transition: all 0.15s;
-      border: 1px solid rgba(201,168,76,0.08);
-    }
-    .scale-table td:first-child {
-      font-family: 'Cinzel', serif;
-      font-weight: 600;
-      color: var(--gold-light);
-      background: rgba(201,168,76,0.1);
-      border-color: rgba(201,168,76,0.2);
-    }
-    .scale-table td.sharp-cell {
-      color: var(--gold);
-    }
-    .scale-table tr:hover td {
-      background: rgba(201,168,76,0.07);
-    }
+    /* SCALES */
+    .scale-table { border-collapse:separate; border-spacing:2px; width:100%; }
+    .scale-table th { font-family:'Cinzel',serif; font-size:0.56rem; letter-spacing:0.15em; color:var(--gold); padding:0.4rem 0.3rem; text-align:center; background:rgba(201,168,76,0.08); }
+    .scale-table td { font-size:0.68rem; padding:0.28rem 0.3rem; text-align:center; background:rgba(20,16,8,0.7); border:1px solid rgba(201,168,76,0.07); transition:all 0.15s; }
+    .scale-table td:first-child { font-family:'Cinzel',serif; font-weight:600; color:var(--gold-light); background:rgba(201,168,76,0.1); border-color:rgba(201,168,76,0.2); }
+    .scale-table td.sc { color:var(--gold); }
+    .scale-table tr { cursor:pointer; }
+    .scale-table tr:hover td { background:rgba(201,168,76,0.09); }
+    .scale-table tr.row-active td { background:rgba(201,168,76,0.16); }
+    .scale-table tr.row-active td:first-child { background:rgba(201,168,76,0.32); }
+    .iv-bar { display:flex; border:1px solid rgba(201,168,76,0.22); border-radius:2px; overflow:hidden; }
+    .iv { flex:2; text-align:center; padding:0.32rem 0.1rem; font-family:'Cinzel',serif; font-size:0.58rem; color:var(--gold); border-right:1px solid rgba(201,168,76,0.12); background:rgba(201,168,76,0.06); }
+    .iv.half { flex:1; background:rgba(139,26,26,0.14); color:#e07070; }
+    .iv:last-child { border-right:none; }
 
-    /* Interval row */
-    .interval-row {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 1rem;
-    }
-    .interval-box {
-      flex: 1;
-      text-align: center;
-      padding: 0.3rem 0.1rem;
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--gold);
-      border-top: 1px solid rgba(201,168,76,0.3);
-      border-bottom: 1px solid rgba(201,168,76,0.3);
-      background: rgba(201,168,76,0.06);
-    }
-    .interval-box:first-child { border-left: 1px solid rgba(201,168,76,0.3); }
-    .interval-box:last-child { border-right: 1px solid rgba(201,168,76,0.3); }
+    /* SPEED */
+    .speed-row { display:flex; align-items:center; gap:0.75rem; padding:0.55rem 0; border-bottom:1px solid rgba(201,168,76,0.06); }
+    .speed-icon { font-size:1rem; width:24px; text-align:center; }
+    .speed-lbl { font-family:'Cinzel',serif; font-size:0.66rem; color:var(--gold); min-width:80px; }
+    .speed-dots { display:flex; gap:5px; flex:1; }
+    .sdot { width:10px; height:10px; border-radius:50%; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.22); cursor:pointer; transition:all 0.2s; }
+    .sdot:hover { background:rgba(201,168,76,0.3); }
+    .sdot.on { background:var(--gold); box-shadow:0 0 6px rgba(201,168,76,0.45); border-color:var(--gold-light); }
+    .speed-pct { font-size:0.6rem; color:rgba(201,168,76,0.5); min-width:30px; text-align:right; }
 
-    /* Tempo badge */
-    .tempo-badge {
-      display: inline-block;
-      font-family: 'Cinzel', serif;
-      font-size: 0.55rem;
-      letter-spacing: 0.2em;
-      padding: 0.2rem 0.6rem;
-      border: 1px solid rgba(201,168,76,0.3);
-      color: rgba(201,168,76,0.7);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tempo-badge:hover, .tempo-badge.active {
-      background: rgba(201,168,76,0.15);
-      border-color: var(--gold);
-      color: var(--gold-light);
-    }
+    /* SEARCH */
+    .search-input { background:rgba(201,168,76,0.06); border:1px solid rgba(201,168,76,0.2); color:var(--cream); font-family:'JetBrains Mono',monospace; font-size:0.7rem; padding:0.38rem 0.75rem; border-radius:2px; outline:none; width:100%; transition:border-color 0.2s; }
+    .search-input:focus { border-color:rgba(201,168,76,0.5); }
+    .search-input::placeholder { color:rgba(245,236,215,0.22); }
 
-    /* Ornament */
-    .ornament {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      opacity: 0.4;
-    }
-    .ornament-line {
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(to right, transparent, var(--gold));
-    }
-    .ornament-line.rev {
-      background: linear-gradient(to left, transparent, var(--gold));
-    }
-    .ornament-diamond {
-      width: 6px; height: 6px;
-      background: var(--gold);
-      transform: rotate(45deg);
-    }
+    /* COLLAPSE */
+    .collapse-body { transition:max-height 0.4s ease,opacity 0.35s ease; overflow:hidden; }
+    .collapse-body.closed { max-height:0 !important; opacity:0; }
+    .collapse-toggle { cursor:pointer; user-select:none; }
+    .chevron { display:inline-block; transition:transform 0.3s; font-size:0.65rem; color:rgba(201,168,76,0.45); }
+    .chevron.open { transform:rotate(180deg); }
 
-    /* Animations */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .fade-up { animation: fadeUp 0.6s ease forwards; }
-    .delay-1 { animation-delay: 0.1s; opacity: 0; }
-    .delay-2 { animation-delay: 0.2s; opacity: 0; }
-    .delay-3 { animation-delay: 0.35s; opacity: 0; }
-    .delay-4 { animation-delay: 0.5s; opacity: 0; }
-    .delay-5 { animation-delay: 0.65s; opacity: 0; }
+    /* ORNAMENT */
+    .orn { display:flex; align-items:center; gap:0.75rem; opacity:0.4; }
+    .orn-line { flex:1; height:1px; background:linear-gradient(to right,transparent,var(--gold)); }
+    .orn-line.r { background:linear-gradient(to left,transparent,var(--gold)); }
+    .orn-d { width:6px; height:6px; background:var(--gold); transform:rotate(45deg); }
 
-    @keyframes shimmer {
-      0% { opacity: 0.5; }
-      50% { opacity: 1; }
-      100% { opacity: 0.5; }
-    }
-    .shimmer { animation: shimmer 3s ease infinite; }
+    /* ANIMATIONS */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+    .fade-up { animation:fadeUp 0.6s ease forwards; }
+    .d1{animation-delay:0.05s;opacity:0} .d2{animation-delay:0.15s;opacity:0} .d3{animation-delay:0.27s;opacity:0}
+    .d4{animation-delay:0.4s;opacity:0} .d5{animation-delay:0.54s;opacity:0} .d6{animation-delay:0.68s;opacity:0}
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--dark); }
-    ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+    /* SCROLLBAR */
+    ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--dark)} ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.25);border-radius:2px}
 
-    /* Speed exercises */
-    .speed-row {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(201,168,76,0.07);
-    }
-    .speed-icon { font-size: 1rem; opacity: 0.6; }
-    .speed-label {
-      font-family: 'Cinzel', serif;
-      font-size: 0.7rem;
-      color: var(--gold);
-      min-width: 90px;
-    }
-    .speed-dots {
-      display: flex;
-      gap: 4px;
-      flex: 1;
-    }
-    .speed-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: rgba(201,168,76,0.15);
-      border: 1px solid rgba(201,168,76,0.3);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .speed-dot.active, .speed-dot:hover {
-      background: var(--gold);
-      box-shadow: 0 0 6px rgba(201,168,76,0.4);
-    }
+    @media(max-width:640px){#nav-dots{display:none}.bpm-display{font-size:1.5rem}.piano-wrap{height:60px}}
+
+    /* ── CIRCLE OF FIFTHS ── */
+    .cof-wrap { display:flex; justify-content:center; align-items:flex-start; flex-wrap:wrap; gap:2rem; }
+    .cof-svg-wrap { position:relative; flex-shrink:0; }
+    #cof-svg { cursor:pointer; }
+    .cof-segment { transition:all 0.2s; cursor:pointer; }
+    .cof-segment:hover { filter:brightness(1.3); }
+    .cof-segment.active { filter:brightness(1.5) drop-shadow(0 0 8px rgba(201,168,76,0.6)); }
+    .cof-info { flex:1; min-width:220px; }
+    .cof-key-name { font-family:'Cinzel',serif; font-size:1.4rem; font-weight:700; color:var(--gold-light); }
+    .cof-detail-row { display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; border-bottom:1px solid rgba(201,168,76,0.08); font-size:0.68rem; }
+    .cof-detail-lbl { color:rgba(201,168,76,0.55); min-width:90px; font-size:0.58rem; letter-spacing:0.1em; font-family:'Cinzel',serif; }
+    .cof-detail-val { color:var(--cream); }
+    .cof-note-chip { display:inline-block; padding:1px 6px; border:1px solid rgba(201,168,76,0.25); border-radius:2px; font-size:0.62rem; margin:1px; }
+    .cof-note-chip.root { background:rgba(201,168,76,0.25); border-color:var(--gold); color:var(--gold-light); font-weight:700; }
+    .cof-note-chip.sharp { color:var(--gold); }
+
+    /* ── INTERVALS ── */
+    .int-table { border-collapse:separate; border-spacing:2px; width:100%; }
+    .int-table th { font-family:'Cinzel',serif; font-size:0.56rem; letter-spacing:0.12em; color:var(--gold); padding:0.38rem 0.5rem; text-align:center; background:rgba(201,168,76,0.08); }
+    .int-table td { font-size:0.68rem; padding:0.3rem 0.5rem; background:rgba(20,16,8,0.7); border:1px solid rgba(201,168,76,0.07); transition:all 0.15s; }
+    .int-table tr:hover td { background:rgba(201,168,76,0.08); }
+    .int-table td.semis { font-family:'Cinzel',serif; font-weight:700; color:var(--gold-light); text-align:center; }
+    .int-table td.iname { font-family:'Cinzel',serif; color:var(--cream); }
+    .int-table td.abbr { color:var(--gold); text-align:center; font-weight:600; }
+    .int-table td.qual { font-size:0.6rem; color:rgba(245,236,215,0.5); }
+    .int-table td.example { color:rgba(245,236,215,0.65); font-size:0.62rem; }
+    .int-table td.sound { font-size:0.62rem; color:rgba(201,168,76,0.5); font-style:italic; }
+    .int-row-perfect td { border-left:3px solid rgba(61,122,200,0.4); }
+    .int-row-major td { border-left:3px solid rgba(61,200,100,0.35); }
+    .int-row-minor td { border-left:3px solid rgba(200,100,61,0.4); }
+    .int-row-tritone td { border-left:3px solid rgba(200,50,50,0.5); }
+
+    /* ── CHORDS ── */
+    .chord-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; }
+    .chord-card { background:rgba(20,16,8,0.8); border:1px solid rgba(201,168,76,0.14); border-radius:3px; padding:0.75rem; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+    .chord-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(to right,transparent,rgba(201,168,76,0.3),transparent); }
+    .chord-card:hover { border-color:rgba(201,168,76,0.4); background:rgba(201,168,76,0.06); transform:translateY(-1px); }
+    .chord-card.active { border-color:var(--gold); background:rgba(201,168,76,0.1); }
+    .chord-name { font-family:'Cinzel',serif; font-size:0.82rem; font-weight:700; color:var(--gold-light); }
+    .chord-symbol { font-family:'Cinzel',serif; font-size:0.6rem; color:rgba(201,168,76,0.55); margin-top:1px; }
+    .chord-notes-row { display:flex; flex-wrap:wrap; gap:2px; margin-top:0.4rem; }
+    .chord-n { font-size:0.58rem; padding:1px 5px; border:1px solid rgba(201,168,76,0.15); border-radius:2px; color:var(--cream); }
+    .chord-n.root-n { background:rgba(201,168,76,0.2); border-color:var(--gold); color:var(--gold-light); font-weight:700; }
+    .chord-n.sharp-n { color:var(--gold); }
+    .chord-formula { font-size:0.56rem; color:rgba(201,168,76,0.4); margin-top:0.3rem; font-style:italic; }
+    .chord-root-row { display:flex; gap:3px; flex-wrap:wrap; margin-bottom:0.75rem; }
+    .root-btn { padding:0.18rem 0.5rem; border:1px solid rgba(201,168,76,0.2); font-family:'Cinzel',serif; font-size:0.55rem; color:rgba(201,168,76,0.6); cursor:pointer; border-radius:2px; transition:all 0.2s; }
+    .root-btn:hover { border-color:var(--gold); color:var(--gold-light); }
+    .root-btn.active { background:rgba(201,168,76,0.2); border-color:var(--gold); color:var(--gold-light); }
+
+    /* ── QUIZ ── */
+    .quiz-card { background:rgba(20,16,8,0.9); border:1px solid rgba(201,168,76,0.2); border-radius:4px; padding:2rem; text-align:center; min-height:160px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; }
+    .quiz-question { font-family:'Cinzel',serif; font-size:1.8rem; font-weight:700; color:var(--gold-light); margin-bottom:0.5rem; }
+    .quiz-sub { font-size:0.65rem; color:rgba(245,236,215,0.35); letter-spacing:0.15em; margin-bottom:1rem; }
+    .quiz-opts { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; width:100%; max-width:400px; }
+    .quiz-opt { padding:0.5rem 1rem; border:1px solid rgba(201,168,76,0.25); background:rgba(201,168,76,0.05); font-family:'Cinzel',serif; font-size:0.7rem; color:var(--cream); cursor:pointer; border-radius:2px; transition:all 0.15s; text-align:center; }
+    .quiz-opt:hover:not(.disabled) { background:rgba(201,168,76,0.15); border-color:var(--gold); }
+    .quiz-opt.correct { background:rgba(61,180,80,0.2); border-color:#4db866; color:#7de090; }
+    .quiz-opt.wrong { background:rgba(180,50,50,0.2); border-color:#d45; color:#e07070; }
+    .quiz-opt.disabled { cursor:default; opacity:0.7; }
+    .quiz-stat { font-family:'Cinzel',serif; font-size:0.62rem; color:rgba(201,168,76,0.5); }
+    .quiz-stat span { color:var(--gold-light); font-size:0.85rem; }
+    .quiz-mode-btn { padding:0.3rem 0.9rem; border:1px solid rgba(201,168,76,0.25); font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.12em; color:rgba(201,168,76,0.65); cursor:pointer; transition:all 0.2s; border-radius:2px; background:transparent; }
+    .quiz-mode-btn:hover { background:rgba(201,168,76,0.12); color:var(--gold-light); }
+    .quiz-mode-btn.on { background:rgba(201,168,76,0.18); border-color:var(--gold); color:var(--gold-light); }
+    .quiz-streak { font-size:0.6rem; color:rgba(201,168,76,0.4); }
+    .quiz-streak span { color:#ffa040; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.06)} 100%{transform:scale(1)} }
+    .anim-shake { animation:shake 0.35s ease; }
+    .anim-pop { animation:pop 0.25s ease; }
+
+    /* ── LEVEL BADGE ── */
+    .level-badge { display:inline-flex; align-items:center; gap:0.4rem; padding:0.2rem 0.7rem; border-radius:2px; font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.15em; font-weight:600; }
+    .level-0 { background:rgba(100,180,100,0.12); border:1px solid rgba(100,180,100,0.3); color:#7dc87d; }
+    .level-1 { background:rgba(100,150,220,0.12); border:1px solid rgba(100,150,220,0.3); color:#80a8e0; }
+    .level-2 { background:rgba(220,160,50,0.12);  border:1px solid rgba(220,160,50,0.3);  color:#e8c96a; }
+    .level-3 { background:rgba(180,80,80,0.15);   border:1px solid rgba(180,80,80,0.35);  color:#e08080; }
+
+    /* ── MINOR SCALES ── */
+    .minor-type-tab { padding:0.22rem 0.7rem; border:1px solid rgba(201,168,76,0.22); font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.12em; color:rgba(201,168,76,0.55); cursor:pointer; transition:all 0.2s; border-radius:2px; }
+    .minor-type-tab:hover { color:var(--gold); border-color:rgba(201,168,76,0.5); }
+    .minor-type-tab.active { background:rgba(201,168,76,0.16); border-color:var(--gold); color:var(--gold-light); }
+    .minor-table { border-collapse:separate; border-spacing:2px; width:100%; }
+    .minor-table th { font-family:'Cinzel',serif; font-size:0.56rem; letter-spacing:0.15em; color:var(--gold); padding:0.4rem 0.3rem; text-align:center; background:rgba(201,168,76,0.08); }
+    .minor-table td { font-size:0.68rem; padding:0.28rem 0.3rem; text-align:center; background:rgba(20,16,8,0.7); border:1px solid rgba(201,168,76,0.07); transition:all 0.15s; }
+    .minor-table td:first-child { font-family:'Cinzel',serif; font-weight:600; color:var(--gold-light); background:rgba(201,168,76,0.1); border-color:rgba(201,168,76,0.2); }
+    .minor-table td.altered { color:#e08080; background:rgba(180,80,80,0.08); border-color:rgba(180,80,80,0.2); }
+    .minor-table tr:hover td { background:rgba(201,168,76,0.08); }
+
+    /* ── GREEK MODES ── */
+    .mode-card { background:rgba(20,16,8,0.8); border:1px solid rgba(201,168,76,0.12); border-radius:3px; padding:0.9rem; transition:all 0.2s; cursor:pointer; position:relative; overflow:hidden; }
+    .mode-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; transition:opacity 0.2s; opacity:0; }
+    .mode-card:hover,.mode-card.active { border-color:rgba(201,168,76,0.4); background:rgba(201,168,76,0.06); }
+    .mode-card:hover::after,.mode-card.active::after { opacity:1; }
+    .mode-name { font-family:'Cinzel',serif; font-size:0.9rem; font-weight:700; color:var(--gold-light); }
+    .mode-start { font-size:0.58rem; color:rgba(201,168,76,0.5); margin-top:1px; }
+    .mode-formula { font-size:0.6rem; color:rgba(245,236,215,0.45); margin-top:0.4rem; letter-spacing:0.05em; }
+    .mode-char { font-size:0.62rem; font-style:italic; color:rgba(245,236,215,0.35); margin-top:0.25rem; }
+    .mode-example { display:flex; flex-wrap:wrap; gap:2px; margin-top:0.5rem; }
+    .mode-note { font-size:0.6rem; padding:1px 5px; border:1px solid rgba(201,168,76,0.15); border-radius:2px; color:var(--cream); }
+    .mode-note.root-note { background:rgba(201,168,76,0.22); border-color:var(--gold); color:var(--gold-light); font-weight:700; }
+    .mode-note.altered-note { color:#e08080; border-color:rgba(180,80,80,0.3); }
+    .mode-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
+
+    /* ── PROGRESSIONS ── */
+    .prog-card { background:rgba(20,16,8,0.8); border:1px solid rgba(201,168,76,0.12); border-radius:3px; padding:0.9rem; cursor:pointer; transition:all 0.2s; }
+    .prog-card:hover { border-color:rgba(201,168,76,0.35); background:rgba(201,168,76,0.05); }
+    .prog-card.active { border-color:var(--gold); background:rgba(201,168,76,0.08); }
+    .prog-name { font-family:'Cinzel',serif; font-size:0.8rem; font-weight:700; color:var(--gold-light); }
+    .prog-genre { font-size:0.54rem; color:rgba(201,168,76,0.45); margin-top:1px; }
+    .prog-chords { display:flex; flex-wrap:wrap; gap:4px; margin-top:0.5rem; align-items:center; }
+    .prog-chord-chip { font-family:'Cinzel',serif; font-size:0.68rem; padding:0.2rem 0.55rem; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.25); border-radius:2px; color:var(--cream); }
+    .prog-chord-chip.tonic { background:rgba(201,168,76,0.22); border-color:var(--gold); color:var(--gold-light); }
+    .prog-chord-chip.dom { background:rgba(180,80,80,0.12); border-color:rgba(180,80,80,0.3); color:#e09090; }
+    .prog-arrow { color:rgba(201,168,76,0.25); font-size:0.65rem; }
+    .prog-desc { font-size:0.6rem; color:rgba(245,236,215,0.3); margin-top:0.4rem; font-style:italic; }
+    .prog-root-sel { padding:0.18rem 0.5rem; border:1px solid rgba(201,168,76,0.18); font-family:'Cinzel',serif; font-size:0.55rem; color:rgba(201,168,76,0.6); cursor:pointer; border-radius:2px; transition:all 0.2s; background:transparent; }
+    .prog-root-sel:hover { border-color:var(--gold); color:var(--gold-light); }
+    .prog-root-sel.active { background:rgba(201,168,76,0.18); border-color:var(--gold); color:var(--gold-light); }
+
+    /* ── CADENCES ── */
+    .cad-card { background:rgba(20,16,8,0.8); border:1px solid rgba(201,168,76,0.12); border-radius:3px; padding:1rem; transition:all 0.2s; }
+    .cad-card:hover { border-color:rgba(201,168,76,0.3); }
+    .cad-name { font-family:'Cinzel',serif; font-size:0.85rem; font-weight:700; color:var(--gold-light); }
+    .cad-type { font-size:0.56rem; color:rgba(201,168,76,0.5); margin-top:1px; letter-spacing:0.12em; font-family:'Cinzel',serif; }
+    .cad-motion { display:flex; align-items:center; gap:0.4rem; margin-top:0.6rem; flex-wrap:wrap; }
+    .cad-chord { font-family:'Cinzel',serif; font-size:0.78rem; padding:0.22rem 0.6rem; border:1px solid rgba(201,168,76,0.2); border-radius:2px; background:rgba(201,168,76,0.07); }
+    .cad-chord.tonic { background:rgba(201,168,76,0.2); border-color:var(--gold); color:var(--gold-light); }
+    .cad-chord.dominant { background:rgba(180,80,80,0.1); border-color:rgba(180,80,80,0.3); color:#e09090; }
+    .cad-chord.subdominant { background:rgba(80,140,200,0.1); border-color:rgba(80,140,200,0.3); color:#90b8e0; }
+    .cad-arrow { color:rgba(201,168,76,0.25); }
+    .cad-desc { font-size:0.62rem; color:rgba(245,236,215,0.35); margin-top:0.6rem; line-height:1.5; }
+    .cad-feeling { font-size:0.58rem; color:rgba(201,168,76,0.45); font-style:italic; margin-top:0.25rem; }
+
+    /* ── RHYTHM ── */
+    .rhythm-row { display:flex; align-items:center; gap:1rem; padding:0.6rem 0; border-bottom:1px solid rgba(201,168,76,0.07); }
+    .rhythm-figure { font-size:1.6rem; min-width:36px; text-align:center; }
+    .rhythm-name { font-family:'Cinzel',serif; font-size:0.72rem; color:var(--gold-light); min-width:110px; }
+    .rhythm-beats { font-size:0.6rem; color:rgba(201,168,76,0.55); min-width:70px; }
+    .rhythm-bar { flex:1; height:12px; position:relative; background:rgba(201,168,76,0.05); border:1px solid rgba(201,168,76,0.1); border-radius:2px; overflow:hidden; }
+    .rhythm-fill { height:100%; background:linear-gradient(to right,var(--gold-dim),var(--gold)); border-radius:1px; transition:width 0.3s; }
+    .rhythm-subdiv { display:flex; gap:2px; margin-top:0.25rem; flex-wrap:wrap; }
+    .rhythm-sub-dot { width:8px; height:8px; border-radius:50%; background:rgba(201,168,76,0.2); border:1px solid rgba(201,168,76,0.25); }
+    .rhythm-sub-dot.filled { background:var(--gold); box-shadow:0 0 4px rgba(201,168,76,0.35); }
+    .rhythm-visual { display:flex; flex-direction:column; flex:1; }
+    .rhythm-fraction { font-family:'Cinzel',serif; font-size:0.6rem; color:rgba(201,168,76,0.4); min-width:44px; }
+
+    /* ── ROADMAP ── */
+    .roadmap-level { border:1px solid rgba(201,168,76,0.15); border-radius:3px; overflow:hidden; margin-bottom:0.75rem; }
+    .roadmap-level-header { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; cursor:pointer; transition:background 0.2s; }
+    .roadmap-level-header:hover { background:rgba(201,168,76,0.05); }
+    .roadmap-level-body { padding:0 1rem 1rem; }
+    .roadmap-item { display:flex; align-items:flex-start; gap:0.6rem; padding:0.35rem 0; border-bottom:1px solid rgba(201,168,76,0.05); cursor:pointer; }
+    .roadmap-item:last-child { border-bottom:none; }
+    .roadmap-check { width:16px; height:16px; border:1px solid rgba(201,168,76,0.3); border-radius:2px; flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+    .roadmap-check.done { background:rgba(100,180,100,0.2); border-color:#7dc87d; }
+    .roadmap-item-text { font-size:0.68rem; color:rgba(245,236,215,0.7); line-height:1.4; }
+    .roadmap-item-text strong { color:var(--cream); font-weight:600; }
+    .roadmap-item.checked .roadmap-item-text { color:rgba(245,236,215,0.38); text-decoration:line-through; text-decoration-color:rgba(100,180,100,0.4); }
+    .roadmap-progress-bar { height:4px; background:rgba(201,168,76,0.1); border-radius:2px; margin-top:0.5rem; overflow:hidden; }
+    .roadmap-progress-fill { height:100%; border-radius:2px; transition:width 0.4s ease; }
+    .roadmap-pct { font-size:0.56rem; color:rgba(201,168,76,0.5); margin-top:3px; }
   </style>
 </head>
 <body>
 
-<div class="staff-bg"></div>
+<div id="scroll-bar"></div>
+<div class="bg-fixed"></div>
+
+<!-- NAV DOTS -->
+<div id="nav-dots">
+  <div class="nav-dot" data-label="INICIO" onclick="gotoSection('#hero')"></div>
+  <div class="nav-dot" data-label="METRÓNOMO" onclick="gotoSection('#s-metro')"></div>
+  <div class="nav-dot" data-label="CROMÁTICA" onclick="gotoSection('#s-crom')"></div>
+  <div class="nav-dot" data-label="CIFRADOS" onclick="gotoSection('#s-cif')"></div>
+  <div class="nav-dot" data-label="EJERCICIOS" onclick="gotoSection('#s-ex')"></div>
+  <div class="nav-dot" data-label="ESCALAS MAY" onclick="gotoSection('#s-scales')"></div>
+  <div class="nav-dot" data-label="ESCALAS MEN" onclick="gotoSection('#s-minor')"></div>
+  <div class="nav-dot" data-label="MODOS" onclick="gotoSection('#s-modes')"></div>
+  <div class="nav-dot" data-label="CÍRCULO" onclick="gotoSection('#s-circle')"></div>
+  <div class="nav-dot" data-label="INTERVALOS" onclick="gotoSection('#s-intervals')"></div>
+  <div class="nav-dot" data-label="ACORDES" onclick="gotoSection('#s-chords')"></div>
+  <div class="nav-dot" data-label="PROGRESIONES" onclick="gotoSection('#s-prog')"></div>
+  <div class="nav-dot" data-label="CADENCIAS" onclick="gotoSection('#s-cad')"></div>
+  <div class="nav-dot" data-label="RITMO" onclick="gotoSection('#s-rhythm')"></div>
+  <div class="nav-dot" data-label="VELOCIDAD" onclick="gotoSection('#s-speed')"></div>
+  <div class="nav-dot" data-label="RUTA" onclick="gotoSection('#s-roadmap')"></div>
+  <div class="nav-dot" data-label="QUIZ" onclick="gotoSection('#s-quiz')"></div>
+</div>
 
 <div class="page-wrap">
 
-  <!-- HEADER -->
-  <div class="text-center mb-12 fade-up delay-1">
-    <div class="hero-subtitle text-xs mb-4 tracking-widest">✦ MÉTODO DE ESTUDIO ✦</div>
-    <h1 class="hero-title text-5xl md:text-7xl mb-3">TEORÍA<br>MUSICAL</h1>
-    <div class="ornament my-4">
-      <div class="ornament-line"></div>
-      <div class="ornament-diamond"></div>
-      <div class="ornament-line rev"></div>
+  <!-- HERO -->
+  <div id="hero" class="text-center pt-14 pb-10 fade-up d1">
+    <div class="hero-sub text-xs mb-5 tracking-widest">✦ MÉTODO DE ESTUDIO ✦</div>
+    <h1 class="hero-title text-6xl md:text-8xl mb-4">TEORÍA<br>MUSICAL</h1>
+    <div class="orn my-5"><div class="orn-line"></div><div class="orn-d"></div><div class="orn-line r"></div></div>
+    <p class="hero-sub text-xs tracking-widest">Principiante → Conservatorio · Guía Completa</p>
+    <div class="flex justify-center flex-wrap gap-8 mt-8">
+      <div class="text-center"><div style="font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold-light)">13</div><div style="font-size:0.52rem;color:rgba(201,168,76,0.4);letter-spacing:0.2em">SECCIONES</div></div>
+      <div class="text-center"><div style="font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold-light)">7</div><div style="font-size:0.52rem;color:rgba(201,168,76,0.4);letter-spacing:0.2em">MODOS</div></div>
+      <div class="text-center"><div style="font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold-light)">16</div><div style="font-size:0.52rem;color:rgba(201,168,76,0.4);letter-spacing:0.2em">ACORDES</div></div>
+      <div class="text-center"><div style="font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold-light)">48</div><div style="font-size:0.52rem;color:rgba(201,168,76,0.4);letter-spacing:0.2em">TEMAS</div></div>
     </div>
-    <p class="hero-subtitle text-sm">Escalas · Cifrados · Ejercicios · Velocidad</p>
   </div>
+
+  <!-- METRÓNOMO -->
+  <section id="s-metro" class="card p-6 mb-5 fade-up d2">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('metro-body','metro-chev')">
+      <div><div class="sec-label mb-1">§ 00</div><h2 class="sec-title text-xl">Metrónomo & Temporizador</h2></div>
+      <span class="chevron open" id="metro-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="metro-body" style="max-height:700px">
+      <div class="divider my-4"></div>
+      <div class="flex flex-wrap gap-5 items-start">
+
+        <!-- Play + pips -->
+        <div class="flex flex-col items-center gap-3">
+          <button id="metro-btn" onclick="toggleMetro()">▶</button>
+          <div class="flex gap-2" id="beat-bar">
+            <div class="beat-pip" id="bp0"></div><div class="beat-pip" id="bp1"></div>
+            <div class="beat-pip" id="bp2"></div><div class="beat-pip" id="bp3"></div>
+          </div>
+          <div style="font-size:0.52rem;color:rgba(201,168,76,0.35);letter-spacing:0.15em;font-family:'Cinzel',serif">PULSO</div>
+        </div>
+
+        <!-- BPM -->
+        <div class="flex-1 min-w-52">
+          <div class="flex items-end gap-4 mb-3">
+            <div><div class="bpm-display" id="bpm-num">60</div><div class="bpm-lbl">BPM</div></div>
+            <div style="font-family:'Cinzel',serif;font-size:0.62rem;color:rgba(201,168,76,0.5);margin-bottom:4px" id="bpm-fig">♩ ANDANTE</div>
+          </div>
+          <input type="range" class="bpm-slider" id="bpm-slider" min="20" max="220" value="60" oninput="updateBpm(this.value)"/>
+          <div class="flex justify-between mt-1" style="font-size:0.48rem;color:rgba(201,168,76,0.25)">
+            <span>LARGO</span><span>ADAGIO</span><span>ANDANTE</span><span>ALLEGRO</span><span>VIVACE</span><span>PRESTO</span>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="pc-btn" onclick="setQuickBpm(40)">40</button>
+            <button class="pc-btn" onclick="setQuickBpm(60)">60</button>
+            <button class="pc-btn" onclick="setQuickBpm(80)">80</button>
+            <button class="pc-btn" onclick="setQuickBpm(100)">100</button>
+            <button class="pc-btn" onclick="setQuickBpm(120)">120</button>
+            <button class="pc-btn" onclick="setQuickBpm(140)">140</button>
+            <button class="pc-btn" onclick="setQuickBpm(160)">160</button>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <span style="font-size:0.55rem;color:rgba(201,168,76,0.35);letter-spacing:0.12em;font-family:'Cinzel',serif">COMPÁS</span>
+            <button class="pc-btn" onclick="setTimeSig(2)" id="ts2">2/4</button>
+            <button class="pc-btn on" onclick="setTimeSig(4)" id="ts4">4/4</button>
+            <button class="pc-btn" onclick="setTimeSig(3)" id="ts3">3/4</button>
+          </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="flex flex-col gap-2 pl-5" style="border-left:1px solid rgba(201,168,76,0.1)">
+          <div style="font-size:0.55rem;color:rgba(201,168,76,0.4);letter-spacing:0.25em;font-family:'Cinzel',serif">SESIÓN</div>
+          <div class="timer-display" id="timer-disp">00:00</div>
+          <div class="flex gap-2">
+            <button class="tbtn" id="timer-btn" onclick="toggleTimer()">INICIO</button>
+            <button class="tbtn" onclick="resetTimer()">RESET</button>
+          </div>
+          <button class="tbtn" onclick="lapTimer()" style="font-size:0.5rem">+ LAPSO</button>
+          <div style="font-size:0.58rem;color:rgba(201,168,76,0.3)">Lapsos: <span id="timer-laps" style="color:var(--gold)">0</span></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
 
   <!-- ESCALA CROMÁTICA -->
-  <div class="card p-6 mb-6 fade-up delay-2">
-    <div class="card-corner tl"></div><div class="card-corner tr"></div>
-    <div class="card-corner bl"></div><div class="card-corner br"></div>
-
-    <div class="section-label mb-1">§ 01</div>
-    <h2 class="section-title text-xl mb-4">Escala Cromática</h2>
-    <div class="divider mb-5"></div>
-
-    <!-- Full chromatic -->
-    <div class="mb-5">
-      <div class="text-xs text-gold opacity-60 mb-2 tracking-widest" style="color:var(--gold)">ESCALA COMPLETA</div>
-      <div class="flex flex-wrap gap-2">
-        <div class="note-pill"><span class="note-name">DO</span><span class="note-pos">0</span></div>
-        <div class="note-pill sharp"><span class="note-name">DO#</span><span class="note-pos">1·2·3</span></div>
-        <div class="note-pill"><span class="note-name">RE</span><span class="note-pos">1·3</span></div>
-        <div class="note-pill sharp"><span class="note-name">RE#</span><span class="note-pos">2·3</span></div>
-        <div class="note-pill"><span class="note-name">MI</span><span class="note-pos">1·2</span></div>
-        <div class="note-pill"><span class="note-name">FA</span><span class="note-pos">1</span></div>
-        <div class="note-pill sharp"><span class="note-name">FA#</span><span class="note-pos">2</span></div>
-        <div class="note-pill"><span class="note-name">SOL</span><span class="note-pos">0</span></div>
-        <div class="note-pill sharp"><span class="note-name">SOL#</span><span class="note-pos">2·3</span></div>
-        <div class="note-pill"><span class="note-name">LA</span><span class="note-pos">1·2</span></div>
-        <div class="note-pill sharp"><span class="note-name">LA#</span><span class="note-pos">1</span></div>
-        <div class="note-pill"><span class="note-name">SI</span><span class="note-pos">2</span></div>
-      </div>
+  <section id="s-crom" class="card p-6 mb-5 fade-up d3">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('crom-body','crom-chev')">
+      <div><div class="sec-label mb-1">§ 01</div><h2 class="sec-title text-xl">Escala Cromática — 5 Octavas</h2></div>
+      <span class="chevron open" id="crom-chev">▼</span>
     </div>
+    <div class="collapse-body" id="crom-body" style="max-height:9999px">
+      <div class="divider my-4"></div>
 
-    <div class="divider mb-5" style="opacity:0.2"></div>
-
-    <!-- Octave -->
-    <div>
-      <div class="text-xs opacity-60 mb-2 tracking-widest" style="color:var(--gold)">OCTAVA</div>
-      <div class="flex flex-wrap gap-2">
-        <div class="note-pill"><span class="note-name">DO</span><span class="note-pos">0</span></div>
-        <div class="note-pill sharp"><span class="note-name">DO#</span><span class="note-pos">1·2</span></div>
-        <div class="note-pill"><span class="note-name">RE</span><span class="note-pos">1</span></div>
-        <div class="note-pill sharp"><span class="note-name">RE#</span><span class="note-pos">2</span></div>
-        <div class="note-pill"><span class="note-name">MI</span><span class="note-pos">0</span></div>
-        <div class="note-pill"><span class="note-name">FA</span><span class="note-pos">1</span></div>
-        <div class="note-pill sharp"><span class="note-name">FA#</span><span class="note-pos">2</span></div>
-        <div class="note-pill"><span class="note-name">SOL</span><span class="note-pos">0</span></div>
-        <div class="note-pill sharp"><span class="note-name">SOL#</span><span class="note-pos">2·3</span></div>
-        <div class="note-pill"><span class="note-name">LA</span><span class="note-pos">1·2</span></div>
-        <div class="note-pill sharp"><span class="note-name">LA#</span><span class="note-pos">1</span></div>
-        <div class="note-pill"><span class="note-name">SI</span><span class="note-pos">2</span></div>
+      <!-- PIANO 4 octavas -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="sec-label" style="font-size:0.55rem">TECLADO — 4 OCTAVAS (C2 – C6) · haz clic para iluminar</div>
+          <button class="oct-tab" onclick="clearPianoLit()" style="font-size:0.48rem;padding:0.15rem 0.5rem">LIMPIAR</button>
+        </div>
+        <div class="piano-scroll-wrap">
+          <div class="piano-outer" id="piano-outer"></div>
+        </div>
       </div>
+
+      <div class="divider mb-5" style="opacity:0.18"></div>
+
+      <!-- TABS -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="sec-label" style="font-size:0.55rem">VISTA</div>
+        <div class="oct-tabs" id="crom-tabs">
+          <div class="oct-tab active" onclick="switchCromTab('all')">TODAS LAS OCTAVAS</div>
+          <div class="oct-tab" onclick="switchCromTab('oct0')" style="color:rgba(201,168,76,0.4)">C0 <span style="font-size:0.42rem">↓↓</span></div>
+          <div class="oct-tab" onclick="switchCromTab('oct1')" style="color:rgba(201,168,76,0.45)">C1 <span style="font-size:0.42rem">↓</span></div>
+          <div class="oct-tab" onclick="switchCromTab('oct2')">C2</div>
+          <div class="oct-tab" onclick="switchCromTab('oct3')">C3</div>
+          <div class="oct-tab" onclick="switchCromTab('oct4')">C4</div>
+          <div class="oct-tab" onclick="switchCromTab('oct5')">C5</div>
+          <div class="oct-tab" onclick="switchCromTab('oct6')">C6</div>
+          <div class="oct-tab" onclick="switchCromTab('oct7')" style="color:rgba(201,168,76,0.45)">C7 <span style="font-size:0.42rem">↑</span></div>
+          <div class="oct-tab" onclick="switchCromTab('oct8')" style="color:rgba(201,168,76,0.4)">C8 <span style="font-size:0.42rem">↑↑</span></div>
+        </div>
+      </div>
+
+      <!-- ALL OCTAVES TABLE -->
+      <div class="oct-panel active" id="cp-all">
+        <div class="chrom-all-wrap">
+          <table class="chrom-all-table" id="chrom-all-table"></table>
+        </div>
+        <p class="text-xs mt-3" style="color:rgba(245,236,215,0.22);font-style:italic">Haz clic en cualquier nota para iluminarla en el piano · Cifrado en paréntesis</p>
+      </div>
+
+      <!-- PER-OCTAVE PANELS -->
+      <div class="oct-panel" id="cp-oct0">
+        <div class="text-xs mb-3 px-2 py-1 rounded" style="color:rgba(201,168,76,0.5);background:rgba(139,26,26,0.12);border:1px solid rgba(139,26,26,0.2);font-style:italic">⚠ Octava sub-contrabajo (C0) — Rango teórico de referencia. Frecuencia: 16–31 Hz. Fingerings extrapolados.</div>
+        <div class="flex flex-wrap gap-2" id="oct-pills-0"></div>
+      </div>
+      <div class="oct-panel" id="cp-oct1">
+        <div class="text-xs mb-3 px-2 py-1 rounded" style="color:rgba(201,168,76,0.5);background:rgba(139,26,26,0.1);border:1px solid rgba(139,26,26,0.15);font-style:italic">⚠ Octava contrabajo (C1) — Registro muy grave. Frecuencia: 33–62 Hz. Típico de contrabajo y órgano.</div>
+        <div class="flex flex-wrap gap-2" id="oct-pills-1"></div>
+      </div>
+      <div class="oct-panel" id="cp-oct2"><div class="flex flex-wrap gap-2" id="oct-pills-2"></div></div>
+      <div class="oct-panel" id="cp-oct3"><div class="flex flex-wrap gap-2" id="oct-pills-3"></div></div>
+      <div class="oct-panel" id="cp-oct4">
+        <div class="mb-4"><div class="sec-label mb-2" style="font-size:0.52rem">C4 — ESCALA COMPLETA (posiciones)</div><div class="flex flex-wrap gap-2" id="oct-pills-4a"></div></div>
+        <div class="divider mb-4" style="opacity:0.12"></div>
+        <div><div class="sec-label mb-2" style="font-size:0.52rem">C4 — OCTAVA (posiciones alternativas)</div><div class="flex flex-wrap gap-2" id="oct-pills-4b"></div></div>
+      </div>
+      <div class="oct-panel" id="cp-oct5"><div class="flex flex-wrap gap-2" id="oct-pills-5"></div></div>
+      <div class="oct-panel" id="cp-oct6"><div class="flex flex-wrap gap-2" id="oct-pills-6"></div></div>
+      <div class="oct-panel" id="cp-oct7">
+        <div class="text-xs mb-3 px-2 py-1 rounded" style="color:rgba(201,168,76,0.5);background:rgba(139,26,26,0.1);border:1px solid rgba(139,26,26,0.15);font-style:italic">⚠ Octava aguda extrema (C7) — Requiere 4.º registro (sobresoflado ⅛). Frecuencia: 2093–3951 Hz. Rango de piccolo/flautín.</div>
+        <div class="flex flex-wrap gap-2" id="oct-pills-7"></div>
+      </div>
+      <div class="oct-panel" id="cp-oct8">
+        <div class="text-xs mb-3 px-2 py-1 rounded" style="color:rgba(201,168,76,0.5);background:rgba(139,26,26,0.12);border:1px solid rgba(139,26,26,0.2);font-style:italic">⚠ Octava sobre-aguda (C8) — Rango teórico / electrónico. Frecuencia: 4186–7902 Hz. Límite superior del piano estándar (C8 = 4186 Hz).</div>
+        <div class="flex flex-wrap gap-2" id="oct-pills-8"></div>
+      </div>
+
     </div>
-  </div>
+  </section>
 
   <!-- CIFRADOS -->
-  <div class="card p-6 mb-6 fade-up delay-3">
-    <div class="card-corner tl"></div><div class="card-corner tr"></div>
-    <div class="card-corner bl"></div><div class="card-corner br"></div>
-
-    <div class="section-label mb-1">§ 02</div>
-    <h2 class="section-title text-xl mb-4">Cifrados</h2>
-    <div class="divider mb-5"></div>
-
-    <div class="mb-4">
-      <div class="text-xs opacity-60 mb-3 tracking-widest" style="color:var(--gold)">ESCALA NATURAL</div>
-      <div class="flex flex-wrap gap-4">
-        <div class="cifrado-pair"><span class="note-es">DO</span><span class="note-en">C</span></div>
-        <div class="cifrado-pair"><span class="note-es">RE</span><span class="note-en">D</span></div>
-        <div class="cifrado-pair"><span class="note-es">MI</span><span class="note-en">E</span></div>
-        <div class="cifrado-pair"><span class="note-es">FA</span><span class="note-en">F</span></div>
-        <div class="cifrado-pair"><span class="note-es">SOL</span><span class="note-en">G</span></div>
-        <div class="cifrado-pair"><span class="note-es">LA</span><span class="note-en">A</span></div>
-        <div class="cifrado-pair"><span class="note-es">SI</span><span class="note-en">B</span></div>
-        <div class="cifrado-pair"><span class="note-es">DO</span><span class="note-en">C</span></div>
+  <section id="s-cif" class="card p-6 mb-5 fade-up d3">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('cif-body','cif-chev')">
+      <div><div class="sec-label mb-1">§ 02</div><h2 class="sec-title text-xl">Cifrados</h2></div>
+      <span class="chevron open" id="cif-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="cif-body" style="max-height:400px">
+      <div class="divider my-4"></div>
+      <div class="mb-4">
+        <div class="sec-label mb-3" style="font-size:0.55rem">ESCALA NATURAL</div>
+        <div class="flex flex-wrap gap-2">
+          <div class="cifrado-pair"><span class="note-es">DO</span><span class="note-en">C</span></div>
+          <div class="cifrado-pair"><span class="note-es">RE</span><span class="note-en">D</span></div>
+          <div class="cifrado-pair"><span class="note-es">MI</span><span class="note-en">E</span></div>
+          <div class="cifrado-pair"><span class="note-es">FA</span><span class="note-en">F</span></div>
+          <div class="cifrado-pair"><span class="note-es">SOL</span><span class="note-en">G</span></div>
+          <div class="cifrado-pair"><span class="note-es">LA</span><span class="note-en">A</span></div>
+          <div class="cifrado-pair"><span class="note-es">SI</span><span class="note-en">B</span></div>
+          <div class="cifrado-pair"><span class="note-es">DO</span><span class="note-en">C</span></div>
+        </div>
+      </div>
+      <div class="divider mb-4" style="opacity:0.12"></div>
+      <div>
+        <div class="sec-label mb-3" style="font-size:0.55rem">SOSTENIDOS / ALTERACIONES</div>
+        <div class="flex flex-wrap gap-2">
+          <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">DO#</span><span class="note-en">C#</span></div>
+          <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">RE#</span><span class="note-en">D#</span></div>
+          <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">FA#</span><span class="note-en">F#</span></div>
+          <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">SOL#</span><span class="note-en">G#</span></div>
+          <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">LA#</span><span class="note-en">A#</span></div>
+          <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">DO#</span><span class="note-en">B#</span></div>
+        </div>
       </div>
     </div>
-
-    <div class="divider mb-4" style="opacity:0.15"></div>
-
-    <div>
-      <div class="text-xs opacity-60 mb-3 tracking-widest" style="color:var(--gold)">SOSTENIDOS / ALTERACIONES</div>
-      <div class="flex flex-wrap gap-4">
-        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">DO#</span><span class="note-en">C#</span></div>
-        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">RE#</span><span class="note-en">D#</span></div>
-        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">FA#</span><span class="note-en">F#</span></div>
-        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">SOL#</span><span class="note-en">G#</span></div>
-        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">LA#</span><span class="note-en">A#</span></div>
-        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">DO#</span><span class="note-en">B#</span></div>
-      </div>
-    </div>
-  </div>
+  </section>
 
   <!-- EJERCICIOS -->
-  <div class="card p-6 mb-6 fade-up delay-4">
-    <div class="card-corner tl"></div><div class="card-corner tr"></div>
-    <div class="card-corner bl"></div><div class="card-corner br"></div>
-
-    <div class="section-label mb-1">§ 03</div>
-    <h2 class="section-title text-xl mb-2">Ejercicios</h2>
-    <p class="text-xs mb-4" style="color:rgba(245,236,215,0.35); font-style:italic">Ensayar con redonda → blanca → negra → corchea → semicorchea</p>
-
-    <!-- Tempo selector -->
-    <div class="flex flex-wrap gap-2 mb-5">
-      <span class="tempo-badge active" onclick="setTempo(this,'♩ = Redonda')">♩ REDONDA</span>
-      <span class="tempo-badge" onclick="setTempo(this,'𝅗𝅥 = Blanca')">𝅗 BLANCA</span>
-      <span class="tempo-badge" onclick="setTempo(this,'♩ = Negra')">♩ NEGRA</span>
-      <span class="tempo-badge" onclick="setTempo(this,'♪ = Corchea')">♪ CORCHEA</span>
-      <span class="tempo-badge" onclick="setTempo(this,'𝅘𝅥𝅯 = Semicorchea')">𝅘 SEMI</span>
+  <section id="s-ex" class="card p-6 mb-5 fade-up d4">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('ex-body','ex-chev')">
+      <div><div class="sec-label mb-1">§ 03</div><h2 class="sec-title text-xl">Ejercicios</h2></div>
+      <span class="chevron open" id="ex-chev">▼</span>
     </div>
-
-    <div class="divider mb-5"></div>
-
-    <div class="flex flex-col gap-4" id="exercises">
+    <div class="collapse-body" id="ex-body" style="max-height:5000px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-3" style="color:rgba(245,236,215,0.28);font-style:italic">Clic en un ejercicio para activarlo · ← → para navegar nota a nota · ESC para salir</p>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <span class="fig-badge active" onclick="setFig(this)">𝅝 REDONDA</span>
+        <span class="fig-badge" onclick="setFig(this)">𝅗 BLANCA</span>
+        <span class="fig-badge" onclick="setFig(this)">♩ NEGRA</span>
+        <span class="fig-badge" onclick="setFig(this)">♪ CORCHEA</span>
+        <span class="fig-badge" onclick="setFig(this)">𝅘 SEMI</span>
+      </div>
+      <div class="flex flex-col gap-3" id="ex-list"></div>
     </div>
-  </div>
+  </section>
 
   <!-- ESCALAS -->
-  <div class="card p-6 mb-6 fade-up delay-5">
-    <div class="card-corner tl"></div><div class="card-corner tr"></div>
-    <div class="card-corner bl"></div><div class="card-corner br"></div>
-
-    <div class="section-label mb-1">§ 04</div>
-    <h2 class="section-title text-xl mb-2">Escalas Mayores</h2>
-    <p class="text-xs mb-4" style="color:rgba(245,236,215,0.35)">Fórmula: Tono – Tono – Semitono – Tono – Tono – Tono – Semitono</p>
-
-    <!-- Interval legend -->
-    <div class="interval-row mb-5">
-      <div class="interval-box">T</div>
-      <div class="interval-box">T</div>
-      <div class="interval-box">½</div>
-      <div class="interval-box">T</div>
-      <div class="interval-box">T</div>
-      <div class="interval-box">T</div>
-      <div class="interval-box">½</div>
+  <section id="s-scales" class="card p-6 mb-5 fade-up d5">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('scales-body','scales-chev')">
+      <div><div class="sec-label mb-1">§ 04</div><h2 class="sec-title text-xl">Escalas Mayores</h2></div>
+      <span class="chevron open" id="scales-chev">▼</span>
     </div>
-
-    <div class="overflow-x-auto">
-      <table class="scale-table">
-        <thead>
-          <tr>
-            <th>TÓNICA</th>
-            <th>II</th>
-            <th>III</th>
-            <th>IV</th>
-            <th>V</th>
-            <th>VI</th>
-            <th>VII</th>
-            <th>VIII</th>
-          </tr>
-        </thead>
-        <tbody id="scaleTable"></tbody>
-      </table>
+    <div class="collapse-body" id="scales-body" style="max-height:1200px">
+      <div class="divider my-4"></div>
+      <div class="iv-bar mb-4"><div class="iv">T</div><div class="iv">T</div><div class="iv half">½</div><div class="iv">T</div><div class="iv">T</div><div class="iv">T</div><div class="iv half">½</div></div>
+      <input class="search-input mb-4" placeholder="Buscar tónica (ej: C, D#, G…)" oninput="filterScales(this.value)"/>
+      <div class="overflow-x-auto">
+        <table class="scale-table">
+          <thead><tr><th>TÓNICA</th><th>II</th><th>III</th><th>IV</th><th>V</th><th>VI</th><th>VII</th><th>VIII</th></tr></thead>
+          <tbody id="scale-tbody"></tbody>
+        </table>
+      </div>
+      <p class="text-xs mt-3" style="color:rgba(245,236,215,0.22);font-style:italic">Clic en fila para resaltarla · T = Tono · ½ = Semitono</p>
     </div>
-  </div>
+  </section>
 
   <!-- VELOCIDAD -->
-  <div class="card p-6 mb-6 fade-up delay-5">
-    <div class="card-corner tl"></div><div class="card-corner tr"></div>
-    <div class="card-corner bl"></div><div class="card-corner br"></div>
+  <section id="s-speed" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('speed-body','speed-chev')">
+      <div><div class="sec-label mb-1">§ 05</div><h2 class="sec-title text-xl">Progreso de Velocidad</h2></div>
+      <span class="chevron open" id="speed-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="speed-body" style="max-height:700px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-5" style="color:rgba(245,236,215,0.28)">Marca los puntos a medida que dominas cada tempo. El progreso se guarda automáticamente en este navegador.</p>
+      <div id="speed-rows"></div>
+      <div class="flex justify-between items-center mt-5 pt-3" style="border-top:1px solid rgba(201,168,76,0.1)">
+        <div style="font-size:0.6rem;color:rgba(201,168,76,0.45)">PROGRESO TOTAL: <span id="total-pct" style="color:var(--gold-light);font-family:'Cinzel',serif;font-size:0.85rem">0%</span></div>
+        <button class="tbtn" onclick="clearSpeed()">REINICIAR TODO</button>
+      </div>
+    </div>
+  </section>
 
-    <div class="section-label mb-1">§ 05</div>
-    <h2 class="section-title text-xl mb-2">Ejercicios para Velocidad</h2>
-    <p class="text-xs mb-5" style="color:rgba(245,236,215,0.35)">Marca tu progreso — haz clic en los puntos para registrar tu nivel</p>
-    <div class="divider mb-5"></div>
+  <!-- ═══ CÍRCULO DE QUINTAS ═══ -->
+  <section id="s-circle" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('circle-body','circle-chev')">
+      <div><div class="sec-label mb-1">§ 06</div><h2 class="sec-title text-xl">Círculo de Quintas</h2></div>
+      <span class="chevron open" id="circle-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="circle-body" style="max-height:800px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-5" style="color:rgba(245,236,215,0.28)">Haz clic en cualquier tonalidad para ver su información — escala, relativa menor, armadura y acordes diatónicos.</p>
+      <div class="cof-wrap">
+        <div class="cof-svg-wrap"><svg id="cof-svg" width="300" height="300" viewBox="-150 -150 300 300"></svg></div>
+        <div class="cof-info" id="cof-info">
+          <div style="color:rgba(245,236,215,0.25);font-size:0.65rem;font-style:italic;margin-top:1rem">← Selecciona una tonalidad</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3 mt-5 pt-4" style="border-top:1px solid rgba(201,168,76,0.08)">
+        <div style="font-size:0.56rem;color:rgba(201,168,76,0.4)">🔵 Tonalidades mayores &nbsp;|&nbsp; 🟤 Tonalidades menores</div>
+      </div>
+    </div>
+  </section>
 
-    <div id="speedExercises"></div>
-  </div>
+  <!-- ═══ INTERVALOS ═══ -->
+  <section id="s-intervals" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('int-body','int-chev')">
+      <div><div class="sec-label mb-1">§ 07</div><h2 class="sec-title text-xl">Intervalos</h2></div>
+      <span class="chevron open" id="int-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="int-body" style="max-height:1200px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-4" style="color:rgba(245,236,215,0.28)">Los intervalos miden la distancia entre dos notas en semitonos. Son la base de acordes, escalas y melodías.</p>
+      <div class="overflow-x-auto">
+        <table class="int-table">
+          <thead><tr><th>SEMI</th><th>NOMBRE</th><th>ABREV</th><th>CALIDAD</th><th>EJEMPLO (C→)</th><th>REFERENCIA SONORA</th></tr></thead>
+          <tbody id="int-tbody"></tbody>
+        </table>
+      </div>
+      <div class="flex flex-wrap gap-4 mt-4 text-xs" style="color:rgba(245,236,215,0.3)">
+        <span><span style="display:inline-block;width:10px;height:10px;background:rgba(61,122,200,0.4);border-radius:1px;vertical-align:middle;margin-right:4px"></span>Perfecto</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:rgba(61,200,100,0.35);border-radius:1px;vertical-align:middle;margin-right:4px"></span>Mayor</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:rgba(200,100,61,0.4);border-radius:1px;vertical-align:middle;margin-right:4px"></span>Menor</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:rgba(200,50,50,0.5);border-radius:1px;vertical-align:middle;margin-right:4px"></span>Tritono</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ACORDES ═══ -->
+  <section id="s-chords" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('chords-body','chords-chev')">
+      <div><div class="sec-label mb-1">§ 08</div><h2 class="sec-title text-xl">Diccionario de Acordes</h2></div>
+      <span class="chevron open" id="chords-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="chords-body" style="max-height:2000px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-4" style="color:rgba(245,236,215,0.28)">Selecciona una tónica y explora los tipos de acordes disponibles. Los números en la fórmula indican intervalos en semitonos desde la raíz.</p>
+      <div class="mb-3">
+        <div class="sec-label mb-2" style="font-size:0.54rem">TÓNICA</div>
+        <div class="chord-root-row" id="chord-roots"></div>
+      </div>
+      <div class="divider mb-4" style="opacity:0.15"></div>
+      <div class="chord-grid" id="chord-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══ QUIZ ═══ -->
+  <section id="s-quiz" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('quiz-body','quiz-chev')">
+      <div><div class="sec-label mb-1">§ 09</div><h2 class="sec-title text-xl">Quiz Musical</h2></div>
+      <span class="chevron open" id="quiz-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="quiz-body" style="max-height:1200px">
+      <div class="divider my-4"></div>
+      <!-- Mode selector -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button class="quiz-mode-btn on" onclick="setQuizMode('cifrado',this)">ES → EN</button>
+        <button class="quiz-mode-btn" onclick="setQuizMode('cifrado_rev',this)">EN → ES</button>
+        <button class="quiz-mode-btn" onclick="setQuizMode('interval',this)">INTERVALOS</button>
+        <button class="quiz-mode-btn" onclick="setQuizMode('scale',this)">ESCALAS</button>
+        <button class="quiz-mode-btn" onclick="setQuizMode('chord',this)">ACORDES</button>
+      </div>
+      <!-- Stats bar -->
+      <div class="flex gap-6 mb-4">
+        <div class="quiz-stat">CORRECTAS <span id="q-correct">0</span></div>
+        <div class="quiz-stat">TOTAL <span id="q-total">0</span></div>
+        <div class="quiz-stat">RACHA <span id="q-streak">0</span> 🔥</div>
+        <div class="quiz-stat">MEJOR <span id="q-best">0</span></div>
+      </div>
+      <!-- Card -->
+      <div class="quiz-card mb-4" id="quiz-card">
+        <div class="quiz-question" id="quiz-q">—</div>
+        <div class="quiz-sub" id="quiz-sub">Presiona NUEVO para comenzar</div>
+        <div class="quiz-opts" id="quiz-opts"></div>
+      </div>
+      <div class="flex gap-3 items-center">
+        <button class="tbtn" onclick="nextQuizQuestion()">NUEVA PREGUNTA</button>
+        <button class="tbtn" onclick="resetQuiz()">REINICIAR</button>
+        <div class="quiz-streak ml-auto">Racha: <span id="q-streak2">0</span> 🔥</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ESCALAS MENORES ═══ -->
+  <section id="s-minor" class="card p-6 mb-5 fade-up d5">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('minor-body','minor-chev')">
+      <div><div class="sec-label mb-1">§ 04b</div><h2 class="sec-title text-xl">Escalas Menores</h2></div>
+      <span class="chevron open" id="minor-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="minor-body" style="max-height:1500px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-4" style="color:rgba(245,236,215,0.28)">Las tres formas de la escala menor. Las notas <span style="color:#e08080">rojas</span> indican alteraciones respecto a la menor natural.</p>
+      <div class="flex flex-wrap gap-2 mb-4" id="minor-type-tabs">
+        <button class="minor-type-tab active" onclick="setMinorType('natural',this)">NATURAL</button>
+        <button class="minor-type-tab" onclick="setMinorType('harmonic',this)">ARMÓNICA</button>
+        <button class="minor-type-tab" onclick="setMinorType('melodic',this)">MELÓDICA</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="minor-table">
+          <thead><tr><th>TÓNICA</th><th>II</th><th>III</th><th>IV</th><th>V</th><th>VI</th><th>VII</th><th>VIII</th></tr></thead>
+          <tbody id="minor-tbody"></tbody>
+        </table>
+      </div>
+      <div class="flex gap-4 mt-4 text-xs" style="color:rgba(245,236,215,0.28)">
+        <span>Fórmulas de intervalos →</span>
+        <span id="minor-formula" style="color:var(--gold)"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MODOS GRIEGOS ═══ -->
+  <section id="s-modes" class="card p-6 mb-5 fade-up d5">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('modes-body','modes-chev')">
+      <div><div class="sec-label mb-1">§ 04c</div><h2 class="sec-title text-xl">Modos Griegos</h2></div>
+      <span class="chevron open" id="modes-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="modes-body" style="max-height:2000px">
+      <div class="divider my-4"></div>
+      <div class="flex flex-wrap gap-2 mb-4 items-center">
+        <span style="font-size:0.58rem;color:rgba(201,168,76,0.45);font-family:'Cinzel',serif;letter-spacing:0.15em">TÓNICA BASE</span>
+        <div id="mode-root-btns" class="flex flex-wrap gap-2"></div>
+      </div>
+      <p class="text-xs mb-4" style="color:rgba(245,236,215,0.28)">Todos los modos de la escala mayor. Las notas <span style="color:#e08080">rojas</span> son alteraciones respecto a la escala mayor de la misma tónica.</p>
+      <div class="mode-grid" id="mode-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══ PROGRESIONES ARMÓNICAS ═══ -->
+  <section id="s-prog" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('prog-body','prog-chev')">
+      <div><div class="sec-label mb-1">§ 10</div><h2 class="sec-title text-xl">Progresiones Armónicas</h2></div>
+      <span class="chevron open" id="prog-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="prog-body" style="max-height:2500px">
+      <div class="divider my-4"></div>
+      <div class="flex flex-wrap gap-2 mb-4 items-center">
+        <span style="font-size:0.58rem;color:rgba(201,168,76,0.45);font-family:'Cinzel',serif;letter-spacing:0.15em">TONALIDAD</span>
+        <div id="prog-root-btns" class="flex flex-wrap gap-2"></div>
+      </div>
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))" id="prog-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══ CADENCIAS ═══ -->
+  <section id="s-cad" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('cad-body','cad-chev')">
+      <div><div class="sec-label mb-1">§ 11</div><h2 class="sec-title text-xl">Cadencias</h2></div>
+      <span class="chevron open" id="cad-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="cad-body" style="max-height:1500px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-4" style="color:rgba(245,236,215,0.28)">Las cadencias son fórmulas de cierre o puntuación en música. Definen si una frase termina con reposo, tensión o ambigüedad.</p>
+      <div class="grid gap-4" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))" id="cad-grid"></div>
+    </div>
+  </section>
+
+  <!-- ═══ LECTURA RÍTMICA ═══ -->
+  <section id="s-rhythm" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('rhythm-body','rhythm-chev')">
+      <div><div class="sec-label mb-1">§ 12</div><h2 class="sec-title text-xl">Figuras Rítmicas & Lectura</h2></div>
+      <span class="chevron open" id="rhythm-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="rhythm-body" style="max-height:2000px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-5" style="color:rgba(245,236,215,0.28)">Cada figura tiene la mitad del valor de la anterior. El pulso de referencia es la negra ♩ = 1 tiempo.</p>
+      <div id="rhythm-rows"></div>
+      <div class="divider my-5" style="opacity:0.15"></div>
+      <div class="sec-label mb-3" style="font-size:0.55rem">COMPASES COMUNES</div>
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))" id="time-sig-grid"></div>
+      <div class="divider my-5" style="opacity:0.15"></div>
+      <div class="sec-label mb-3" style="font-size:0.55rem">PATRONES RÍTMICOS ESENCIALES</div>
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))" id="rhythm-patterns"></div>
+    </div>
+  </section>
+
+  <!-- ═══ RUTA DE APRENDIZAJE ═══ -->
+  <section id="s-roadmap" class="card p-6 mb-5 fade-up d6">
+    <div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div>
+    <div class="flex items-center justify-between mb-1 collapse-toggle" onclick="toggleSec('roadmap-body','roadmap-chev')">
+      <div><div class="sec-label mb-1">§ 13</div><h2 class="sec-title text-xl">Ruta de Aprendizaje</h2></div>
+      <span class="chevron open" id="roadmap-chev">▼</span>
+    </div>
+    <div class="collapse-body" id="roadmap-body" style="max-height:5000px">
+      <div class="divider my-4"></div>
+      <p class="text-xs mb-4" style="color:rgba(245,236,215,0.28)">Marca cada tema conforme lo dominas. El progreso se guarda en tu navegador. De principiante a nivel conservatorio.</p>
+      <div class="flex justify-between items-center mb-5">
+        <div style="font-size:0.6rem;color:rgba(201,168,76,0.45)">PROGRESO TOTAL: <span id="rm-total-pct" style="color:var(--gold-light);font-family:'Cinzel',serif;font-size:0.9rem">0%</span></div>
+        <button class="tbtn" onclick="clearRoadmap()">REINICIAR</button>
+      </div>
+      <div id="roadmap-levels"></div>
+    </div>
+  </section>
 
   <!-- FOOTER -->
-  <div class="text-center mt-12 fade-up delay-5">
-    <div class="ornament mb-4">
-      <div class="ornament-line"></div>
-      <div class="ornament-diamond shimmer"></div>
-      <div class="ornament-line rev"></div>
-    </div>
-    <p class="text-xs tracking-widest" style="color:rgba(201,168,76,0.3); font-family:'Cinzel',serif">
-      PRACTICA · PERSISTE · PERFECCIONA
-    </p>
+  <div class="text-center mt-14 fade-up d6">
+    <div class="orn mb-4"><div class="orn-line"></div><div class="orn-d" style="animation:pulse 3s ease infinite"></div><div class="orn-line r"></div></div>
+    <p class="text-xs tracking-widest" style="color:rgba(201,168,76,0.25);font-family:'Cinzel',serif">PRACTICA · PERSISTE · PERFECCIONA</p>
   </div>
 
 </div>
 
 <script>
-  // ── DATA ──────────────────────────────────────────────────────────────────
-  const exercises = [
-    "DO – MI – RE – FA – MI – SOL – FA – LA – SOL – SI – LA – DO – SI – RE – DO – MI",
-    "DO – FA – RE – SOL – MI – LA – FA – SI – SOL – DO – LA – RE – SI – MI – DO – FA",
-    "DO – SOL – RE – LA – MI – SI – FA – DO – SOL – RE – LA – MI – SI – FA – DO – SOL",
-    "DO – LA – RE – SI – MI – DO – FA – RE – SOL – MI – LA – FA – SI – SOL – DO – LA",
-    "DO – RE – DO – MI – DO – FA – DO – SOL – DO – LA – DO – SI – DO – DO",
-    "RE – MI – RE – FA – RE – SOL – RE – LA – RE – SI – RE – DO",
-    "MI – FA – MI – SOL – MI – LA – MI – SI – MI – DO – MI – RE – MI – MI",
-    "SI – LA – SI – SOL – SI – FA – SI – MI – SI – RE – SI – DO",
-    "DO – RE – DO – RE – MI – DO – RE – MI – FA – DO – RE – MI – FA – SOL – DO – RE – MI – FA – SOL – LA – DO – RE – MI – FA – SOL – LA – SI – DO – RE – MI – FA – SOL – LA – SI – DO"
-  ];
+// ═══════════ DATA ═══════════
+const SHARPS = new Set(['DO#','RE#','FA#','SOL#','LA#','MI#','SI#']);
 
-  const scales = [
-    ["C",  "D",  "E",  "F",  "G",  "A",  "B",  "C"],
-    ["C#", "D#", "Eb", "F#", "G#", "A#", "C",  "C#"],
-    ["Db", "D",  "E",  "F#", "G",  "A",  "B",  "C#"],
-    ["D",  "D#", "F",  "G",  "G#", "A#", "C",  "D"],
-    ["D#", "E",  "F#", "G#", "A",  "B",  "C#", "D#"],
-    ["E",  "F",  "F#", "G#", "A#", "B",  "C#", "D#"],
-    ["F",  "F#", "G",  "A",  "B",  "C",  "D#", "E"],
-    ["F#", "G",  "G#", "A#", "C",  "C#", "D#", "F"],
-    ["G",  "G#", "A",  "B",  "C#", "D",  "E",  "F#"],
-    ["G#", "A",  "A#", "C",  "D",  "D#", "F",  "G"],
-    ["A",  "A#", "B",  "C#", "D#", "E",  "F#", "G#"],
-    ["A#", "B",  "C",  "D",  "D#", "F",  "G",  "A"],
-    ["B",  "–",  "–",  "–",  "–",  "–",  "–",  "–"],
-  ];
+// Note names ES → EN
+const NOTE_EN = {DO:'C','DO#':'C#',RE:'D','RE#':'D#',MI:'E',FA:'F','FA#':'F#',SOL:'G','SOL#':'G#',LA:'A','LA#':'A#',SI:'B'};
 
-  const speedLevels = [
-    { label: "♩ = 40",  icon: "🐢" },
-    { label: "♩ = 60",  icon: "🚶" },
-    { label: "♩ = 80",  icon: "🏃" },
-    { label: "♩ = 100", icon: "🚴" },
-    { label: "♩ = 120", icon: "🚗" },
-    { label: "♩ = 140", icon: "✈️" },
-  ];
+// The 12 chromatic notes in order
+const CHROMATIC_12 = ['DO','DO#','RE','RE#','MI','FA','FA#','SOL','SOL#','LA','LA#','SI'];
 
-  // ── RENDER EXERCISES ─────────────────────────────────────────────────────
-  const sharps = new Set(['DO#','RE#','FA#','SOL#','LA#','MI#','SI#']);
+// Per-octave data: {note, pos (fingering), en (english name)}
+// Positions are instrument fingerings (recorder-style) — same fingerings across octaves,
+// thumb half-open (½) for 2nd register, overblow for 3rd register.
+const OCT_DATA = {
+  // ── C0 Sub-contrabass (theoretical / reference) ──────────────────────
+  0: [
+    {n:'DO',  p:'ref·0',     en:'C0'},  {n:'DO#', p:'ref·1·2·3', en:'C#0'},
+    {n:'RE',  p:'ref·1·3',   en:'D0'},  {n:'RE#', p:'ref·2·3',   en:'D#0'},
+    {n:'MI',  p:'ref·1·2',   en:'E0'},  {n:'FA',  p:'ref·1',     en:'F0'},
+    {n:'FA#', p:'ref·2',     en:'F#0'}, {n:'SOL', p:'ref·0',     en:'G0'},
+    {n:'SOL#',p:'ref·2·3',   en:'G#0'}, {n:'LA',  p:'ref·1·2',   en:'A0'},
+    {n:'LA#', p:'ref·1',     en:'A#0'}, {n:'SI',  p:'ref·2',     en:'B0'},
+  ],
+  // ── C1 Contrabass ─────────────────────────────────────────────────────
+  1: [
+    {n:'DO',  p:'↓·0',     en:'C1'},  {n:'DO#', p:'↓·1·2·3', en:'C#1'},
+    {n:'RE',  p:'↓·1·3',   en:'D1'},  {n:'RE#', p:'↓·2·3',   en:'D#1'},
+    {n:'MI',  p:'↓·1·2',   en:'E1'},  {n:'FA',  p:'↓·1',     en:'F1'},
+    {n:'FA#', p:'↓·2',     en:'F#1'}, {n:'SOL', p:'↓·0',     en:'G1'},
+    {n:'SOL#',p:'↓·2·3',   en:'G#1'}, {n:'LA',  p:'↓·1·2',   en:'A1'},
+    {n:'LA#', p:'↓·1',     en:'A#1'}, {n:'SI',  p:'↓·2',     en:'B1'},
+  ],
+  2: [
+    {n:'DO',  p:'0',     en:'C2'},  {n:'DO#', p:'1·2·3', en:'C#2'},
+    {n:'RE',  p:'1·3',   en:'D2'},  {n:'RE#', p:'2·3',   en:'D#2'},
+    {n:'MI',  p:'1·2',   en:'E2'},  {n:'FA',  p:'1',     en:'F2'},
+    {n:'FA#', p:'2',     en:'F#2'}, {n:'SOL', p:'0',     en:'G2'},
+    {n:'SOL#',p:'2·3',   en:'G#2'}, {n:'LA',  p:'1·2',   en:'A2'},
+    {n:'LA#', p:'1',     en:'A#2'}, {n:'SI',  p:'2',     en:'B2'},
+  ],
+  3: [
+    {n:'DO',  p:'0',     en:'C3'},  {n:'DO#', p:'1·2·3', en:'C#3'},
+    {n:'RE',  p:'1·3',   en:'D3'},  {n:'RE#', p:'2·3',   en:'D#3'},
+    {n:'MI',  p:'1·2',   en:'E3'},  {n:'FA',  p:'1',     en:'F3'},
+    {n:'FA#', p:'2',     en:'F#3'}, {n:'SOL', p:'0',     en:'G3'},
+    {n:'SOL#',p:'2·3',   en:'G#3'}, {n:'LA',  p:'1·2',   en:'A3'},
+    {n:'LA#', p:'1',     en:'A#3'}, {n:'SI',  p:'2',     en:'B3'},
+  ],
+  4: [
+    // Escala completa (registro bajo)
+    {n:'DO',  p:'0',     en:'C4'},  {n:'DO#', p:'1·2·3', en:'C#4'},
+    {n:'RE',  p:'1·3',   en:'D4'},  {n:'RE#', p:'2·3',   en:'D#4'},
+    {n:'MI',  p:'1·2',   en:'E4'},  {n:'FA',  p:'1',     en:'F4'},
+    {n:'FA#', p:'2',     en:'F#4'}, {n:'SOL', p:'0',     en:'G4'},
+    {n:'SOL#',p:'2·3',   en:'G#4'}, {n:'LA',  p:'1·2',   en:'A4'},
+    {n:'LA#', p:'1',     en:'A#4'}, {n:'SI',  p:'2',     en:'B4'},
+  ],
+  // C4 alternate positions (octava/2nd register)
+  '4b': [
+    {n:'DO',  p:'0 ½',   en:'C4'},  {n:'DO#', p:'1·2',   en:'C#4'},
+    {n:'RE',  p:'1',     en:'D4'},  {n:'RE#', p:'2',     en:'D#4'},
+    {n:'MI',  p:'0',     en:'E4'},  {n:'FA',  p:'1',     en:'F4'},
+    {n:'FA#', p:'2',     en:'F#4'}, {n:'SOL', p:'0',     en:'G4'},
+    {n:'SOL#',p:'2·3',   en:'G#4'}, {n:'LA',  p:'1·2',   en:'A4'},
+    {n:'LA#', p:'1',     en:'A#4'}, {n:'SI',  p:'2',     en:'B4'},
+  ],
+  5: [
+    {n:'DO',  p:'½·0',   en:'C5'},  {n:'DO#', p:'½·2·3', en:'C#5'},
+    {n:'RE',  p:'½·1·3', en:'D5'},  {n:'RE#', p:'½·2·3', en:'D#5'},
+    {n:'MI',  p:'½·1·2', en:'E5'},  {n:'FA',  p:'½·1',   en:'F5'},
+    {n:'FA#', p:'½·2',   en:'F#5'}, {n:'SOL', p:'½·0',   en:'G5'},
+    {n:'SOL#',p:'½·2·3', en:'G#5'}, {n:'LA',  p:'½·1·2', en:'A5'},
+    {n:'LA#', p:'½·1',   en:'A#5'}, {n:'SI',  p:'½·2',   en:'B5'},
+  ],
+  6: [
+    {n:'DO',  p:'¼·0',   en:'C6'},  {n:'DO#', p:'¼·1·3', en:'C#6'},
+    {n:'RE',  p:'¼·3',   en:'D6'},  {n:'RE#', p:'¼·2·3', en:'D#6'},
+    {n:'MI',  p:'¼·1·2', en:'E6'},  {n:'FA',  p:'¼·1',   en:'F6'},
+    {n:'FA#', p:'¼·2',   en:'F#6'}, {n:'SOL', p:'¼·0',   en:'G6'},
+    {n:'SOL#',p:'¼·2·3', en:'G#6'}, {n:'LA',  p:'¼·1·2', en:'A6'},
+    {n:'LA#', p:'¼·1',   en:'A#6'}, {n:'SI',  p:'¼·2',   en:'B6'},
+  ],
+  // ── C7 Piccolo / extreme high ──────────────────────────────────────────
+  7: [
+    {n:'DO',  p:'⅛·0',   en:'C7'},  {n:'DO#', p:'⅛·1·3', en:'C#7'},
+    {n:'RE',  p:'⅛·3',   en:'D7'},  {n:'RE#', p:'⅛·2·3', en:'D#7'},
+    {n:'MI',  p:'⅛·1·2', en:'E7'},  {n:'FA',  p:'⅛·1',   en:'F7'},
+    {n:'FA#', p:'⅛·2',   en:'F#7'}, {n:'SOL', p:'⅛·0',   en:'G7'},
+    {n:'SOL#',p:'⅛·2·3', en:'G#7'}, {n:'LA',  p:'⅛·1·2', en:'A7'},
+    {n:'LA#', p:'⅛·1',   en:'A#7'}, {n:'SI',  p:'⅛·2',   en:'B7'},
+  ],
+  // ── C8 Over-acute / electronic reference ──────────────────────────────
+  8: [
+    {n:'DO',  p:'↑·0',   en:'C8'},  {n:'DO#', p:'↑·1·3', en:'C#8'},
+    {n:'RE',  p:'↑·3',   en:'D8'},  {n:'RE#', p:'↑·2·3', en:'D#8'},
+    {n:'MI',  p:'↑·1·2', en:'E8'},  {n:'FA',  p:'↑·1',   en:'F8'},
+    {n:'FA#', p:'↑·2',   en:'F#8'}, {n:'SOL', p:'↑·0',   en:'G8'},
+    {n:'SOL#',p:'↑·2·3', en:'G#8'}, {n:'LA',  p:'↑·1·2', en:'A8'},
+    {n:'LA#', p:'↑·1',   en:'A#8'}, {n:'SI',  p:'↑·2',   en:'B8'},
+  ],
+};
 
-  function renderNotes(line) {
-    return line.split(' – ').map((n, i, arr) => {
-      const isSharp = sharps.has(n);
-      const cls = isSharp ? 'n s' : 'n';
-      return `<span class="${cls}">${n}</span>${i < arr.length - 1 ? '<span class="dash">–</span>' : ''}`;
-    }).join('');
-  }
+// Legacy aliases used by exercise player piano highlight
+const CHROM_FULL = OCT_DATA[4];
+const CHROM_OCT  = OCT_DATA['4b'];
+const EXERCISES = [
+  "DO – MI – RE – FA – MI – SOL – FA – LA – SOL – SI – LA – DO – SI – RE – DO – MI",
+  "DO – FA – RE – SOL – MI – LA – FA – SI – SOL – DO – LA – RE – SI – MI – DO – FA",
+  "DO – SOL – RE – LA – MI – SI – FA – DO – SOL – RE – LA – MI – SI – FA – DO – SOL",
+  "DO – LA – RE – SI – MI – DO – FA – RE – SOL – MI – LA – FA – SI – SOL – DO – LA",
+  "DO – RE – DO – MI – DO – FA – DO – SOL – DO – LA – DO – SI – DO – DO",
+  "RE – MI – RE – FA – RE – SOL – RE – LA – RE – SI – RE – DO",
+  "MI – FA – MI – SOL – MI – LA – MI – SI – MI – DO – MI – RE – MI – MI",
+  "SI – LA – SI – SOL – SI – FA – SI – MI – SI – RE – SI – DO",
+  "DO – RE – DO – RE – MI – DO – RE – MI – FA – DO – RE – MI – FA – SOL – DO – RE – MI – FA – SOL – LA – DO – RE – MI – FA – SOL – LA – SI – DO – RE – MI – FA – SOL – LA – SI – DO"
+];
+const SCALES = [
+  ["C","D","E","F","G","A","B","C"],["C#","D#","Eb","F#","G#","A#","C","C#"],
+  ["Db","D","E","F#","G","A","B","C#"],["D","D#","F","G","G#","A#","C","D"],
+  ["D#","E","F#","G#","A","B","C#","D#"],["E","F","F#","G#","A#","B","C#","D#"],
+  ["F","F#","G","A","B","C","D#","E"],["F#","G","G#","A#","C","C#","D#","F"],
+  ["G","G#","A","B","C#","D","E","F#"],["G#","A","A#","C","D","D#","F","G"],
+  ["A","A#","B","C#","D#","E","F#","G#"],["A#","B","C","D","D#","F","G","A"],
+];
+const SPEED_LEVELS = [
+  {label:"♩ = 40",icon:"🐢"},{label:"♩ = 60",icon:"🚶"},{label:"♩ = 80",icon:"🏃"},
+  {label:"♩ = 100",icon:"🚴"},{label:"♩ = 120",icon:"🚗"},{label:"♩ = 140",icon:"✈️"},
+  {label:"♩ = 160",icon:"⚡"},{label:"♩ = 180",icon:"🔥"},
+];
 
-  const exContainer = document.getElementById('exercises');
-  exercises.forEach((ex, i) => {
-    const div = document.createElement('div');
-    div.className = 'exercise-item';
-    div.innerHTML = `
-      <div class="ex-number mb-1">EJERCICIO · ${String(i+1).padStart(2,'0')}</div>
-      <div class="exercise-notes">${renderNotes(ex)}</div>
-    `;
-    exContainer.appendChild(div);
+// ═══════════ SCROLL + NAV ═══════════
+window.addEventListener('scroll',()=>{
+  const e=document.documentElement;
+  document.getElementById('scroll-bar').style.width=(e.scrollTop/(e.scrollHeight-e.clientHeight)*100)+'%';
+  updateNavDots();
+});
+function gotoSection(sel){document.querySelector(sel).scrollIntoView({behavior:'smooth'});}
+const SECTS=['#hero','#s-metro','#s-crom','#s-cif','#s-ex','#s-scales','#s-minor','#s-modes','#s-circle','#s-intervals','#s-chords','#s-prog','#s-cad','#s-rhythm','#s-speed','#s-roadmap','#s-quiz'];
+function updateNavDots(){
+  const dots=document.querySelectorAll('.nav-dot');
+  SECTS.forEach((s,i)=>{
+    const el=document.querySelector(s); if(!el)return;
+    const r=el.getBoundingClientRect();
+    dots[i].classList.toggle('active',r.top<=window.innerHeight/2&&r.bottom>=window.innerHeight/2);
   });
+}
 
-  // ── RENDER SCALES ─────────────────────────────────────────────────────────
-  const tbody = document.getElementById('scaleTable');
-  scales.forEach(row => {
+// ═══════════ COLLAPSE ═══════════
+function toggleSec(bodyId,chevId){
+  const b=document.getElementById(bodyId),c=document.getElementById(chevId);
+  const open=!b.classList.contains('closed');
+  if(open){b.style.maxHeight=b.scrollHeight+'px';requestAnimationFrame(()=>{b.style.maxHeight='0';b.classList.add('closed');});}
+  else{b.classList.remove('closed');b.style.maxHeight=b.scrollHeight+'px';setTimeout(()=>{b.style.maxHeight='5000px';},420);}
+  c.classList.toggle('open',!open);
+}
+
+// ═══════════ AUDIO ═══════════
+let audioCtx=null;
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playClick(accent=false){
+  const ctx=getCtx(),buf=ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.007));
+  const src=ctx.createBufferSource(),gain=ctx.createGain(),f=ctx.createBiquadFilter();
+  src.buffer=buf; gain.gain.value=accent?2:1; f.type='bandpass'; f.frequency.value=accent?2000:900; f.Q.value=1;
+  src.connect(f);f.connect(gain);gain.connect(ctx.destination);src.start();
+}
+
+// ═══════════ METRONOME ═══════════
+let metroRun=false,metroInt=null,bpm=60,timeSig=4,beatCnt=0;
+function toggleMetro(){metroRun?stopMetro():startMetro();}
+function startMetro(){
+  metroRun=true;beatCnt=0;
+  document.getElementById('metro-btn').textContent='⏹';
+  document.getElementById('metro-btn').classList.add('playing');
+  tick();metroInt=setInterval(tick,60000/bpm);
+}
+function stopMetro(){
+  metroRun=false;clearInterval(metroInt);
+  const b=document.getElementById('metro-btn');
+  b.textContent='▶';b.className='';
+  clearPips();
+}
+function tick(){
+  const beat=beatCnt%timeSig;
+  playClick(beat===0);animBeat(beat===0);litPip(beat);beatCnt++;
+}
+function animBeat(accent){
+  const b=document.getElementById('metro-btn');
+  b.classList.remove('beat','beat-accent');void b.offsetWidth;
+  b.classList.add(accent?'beat-accent':'beat');
+  setTimeout(()=>b.classList.remove('beat','beat-accent'),80);
+}
+function litPip(beat){
+  clearPips();
+  const p=document.getElementById('bp'+beat);
+  if(p)p.classList.add(beat===0?'lit-accent':'lit');
+}
+function clearPips(){for(let i=0;i<6;i++){const p=document.getElementById('bp'+i);if(p)p.classList.remove('lit','lit-accent');}}
+function updateBpm(v){
+  bpm=parseInt(v);document.getElementById('bpm-num').textContent=v;
+  const fig=bpm<=40?'♩ LARGO':bpm<=55?'♩ GRAVE':bpm<=65?'♩ ADAGIO':bpm<=75?'♩ ANDANTE':bpm<=90?'♩ MODERATO':bpm<=115?'♩ ALLEGRETTO':bpm<=140?'♩ ALLEGRO':bpm<=165?'♩ VIVACE':bpm<=185?'♩ PRESTO':'♩ PRESTISSIMO';
+  document.getElementById('bpm-fig').textContent=fig;
+  if(metroRun){clearInterval(metroInt);metroInt=setInterval(tick,60000/bpm);}
+}
+function setQuickBpm(v){document.getElementById('bpm-slider').value=v;updateBpm(v);}
+function setTimeSig(n){
+  timeSig=n;beatCnt=0;
+  ['ts2','ts3','ts4'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
+  document.getElementById('ts'+n).classList.add('on');
+  const bar=document.getElementById('beat-bar');bar.innerHTML='';
+  for(let i=0;i<n;i++){const p=document.createElement('div');p.className='beat-pip';p.id='bp'+i;bar.appendChild(p);}
+}
+
+// ═══════════ TIMER ═══════════
+let timerRun=false,timerSecs=0,timerInt=null,timerLaps=0;
+function toggleTimer(){
+  if(timerRun){clearInterval(timerInt);timerRun=false;document.getElementById('timer-btn').textContent='CONTINUAR';}
+  else{timerRun=true;document.getElementById('timer-btn').textContent='PAUSA';timerInt=setInterval(()=>{timerSecs++;renderTimer();},1000);}
+}
+function resetTimer(){clearInterval(timerInt);timerRun=false;timerSecs=0;timerLaps=0;document.getElementById('timer-btn').textContent='INICIO';document.getElementById('timer-laps').textContent='0';renderTimer();}
+function lapTimer(){timerLaps++;document.getElementById('timer-laps').textContent=timerLaps;}
+function renderTimer(){const m=Math.floor(timerSecs/60),s=timerSecs%60;document.getElementById('timer-disp').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+
+// ═══════════ MULTI-OCTAVE PIANO ═══════════
+// White notes and their black-key neighbors per octave
+const WHITE_NOTES = ['DO','RE','MI','FA','SOL','LA','SI'];
+const BLACK_AFTER = {DO:'DO#', RE:'RE#', FA:'FA#', SOL:'SOL#', LA:'LA#'}; // black key appears AFTER white key
+const PIANO_OCTAVES = [0,1,2,3,4,5,6,7,8];
+
+function buildPiano() {
+  const outer = document.getElementById('piano-outer');
+  outer.innerHTML = '';
+  PIANO_OCTAVES.forEach(oct => {
+    const block = document.createElement('div');
+    block.className = 'octave-block';
+    // label
+    const lbl = document.createElement('div');
+    lbl.className = 'octave-block-label';
+    const isExtOct = oct <= 1 || oct >= 7;
+    lbl.style.opacity = isExtOct ? '0.45' : '1';
+    lbl.textContent = 'C' + oct + (oct <= 1 ? ' ↓' : oct >= 7 ? ' ↑' : '');
+    block.appendChild(lbl);
+    // White keys — dim extreme octaves slightly
+    WHITE_NOTES.forEach(wn => {
+      const k = document.createElement('div');
+      k.className = 'key-white' + (wn === 'DO' ? ' do-key' : '');
+      if (isExtOct) k.style.opacity = '0.55';
+      k.dataset.note = wn; k.dataset.oct = oct;
+      k.innerHTML = `<span class="kl">${wn}<br><span style="font-size:0.38rem;opacity:0.5">${oct}</span></span>`;
+      k.onclick = () => litPianoKey(wn, oct);
+      block.appendChild(k);
+    });
+    // Black keys overlay
+    const blackRow = document.createElement('div');
+    blackRow.className = 'black-row';
+    // Build black key positions: after DO, RE, FA, SOL, LA (not after MI or SI)
+    // Each white key is 32px wide. Black key slots:
+    // Pattern: sp(16) [C#slot(32)] sp(16+32=48=after RE gap) wait...
+    // Simpler: use fixed widths. 7 white keys = 7*32=224px per octave.
+    // Black keys at offsets: C#=22, D#=54, F#=118, G#=150, A#=182 (from left of octave)
+    const blackOffsets = [22, 54, 118, 150, 182]; // px from left of white key area
+    const blackNotes = ['DO#','RE#','FA#','SOL#','LA#'];
+    // Use absolute positioning instead of flex for black keys
+    blackNotes.forEach((bn, bi) => {
+      const bk = document.createElement('div');
+      bk.className = 'key-black';
+      if (isExtOct) bk.style.opacity = '0.5';
+      bk.style.position = 'absolute';
+      bk.style.left = blackOffsets[bi] + 'px';
+      bk.style.top = '0';
+      bk.style.zIndex = '2';
+      bk.dataset.note = bn; bk.dataset.oct = oct;
+      bk.innerHTML = `<span class="kl">${NOTE_EN[bn]}${oct}</span>`;
+      bk.onclick = (e) => { e.stopPropagation(); litPianoKey(bn, oct); };
+      block.appendChild(bk);
+    });
+    outer.appendChild(block);
+  });
+}
+
+function litPianoKey(note, oct) {
+  // Light all matching note name (same note across octaves) — or specific octave
+  document.querySelectorAll('[data-note][data-oct]').forEach(k => {
+    k.classList.toggle('lit', k.dataset.note === note && parseInt(k.dataset.oct) === oct);
+  });
+  // Also highlight pills
+  document.querySelectorAll('.note-pill').forEach(p => {
+    p.classList.toggle('highlight', p.dataset.note === note && parseInt(p.dataset.oct||0) === oct);
+  });
+  // Highlight in chromatic table
+  document.querySelectorAll('.chrom-all-table td').forEach(td => {
+    td.classList.toggle('clit', td.dataset.note === note && parseInt(td.dataset.oct||0) === oct);
+  });
+}
+
+function clearPianoLit() {
+  document.querySelectorAll('[data-note][data-oct]').forEach(k => k.classList.remove('lit'));
+  document.querySelectorAll('.note-pill').forEach(p => p.classList.remove('highlight'));
+  document.querySelectorAll('.chrom-all-table td').forEach(td => td.classList.remove('clit'));
+}
+
+// ═══════════ CHROMATIC TABLE (ALL OCTAVES) ═══════════
+function buildChromAllTable() {
+  const table = document.getElementById('chrom-all-table');
+  // Header row: note names
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = '<th class="oct-header">OCT<br><span style="font-size:0.4rem;opacity:0.5">HZ DO</span></th>';
+  CHROMATIC_12.forEach(n => {
+    const isS = SHARPS.has(n);
+    headerRow.innerHTML += `<th style="${isS?'color:var(--gold)':''}">${n}<br><span style="opacity:0.5;font-size:0.45rem">${NOTE_EN[n]}</span></th>`;
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Frequency of C for each octave (standard A4=440)
+  const C_FREQ = {0:'16.4',1:'32.7',2:'65.4',3:'130.8',4:'261.6',5:'523.3',6:'1046.5',7:'2093',8:'4186'};
+
+  const tbody = document.createElement('tbody');
+  [0,1,2,3,4,'4b',5,6,7,8].forEach(octKey => {
+    const data = OCT_DATA[octKey];
+    if (!data) return;
     const tr = document.createElement('tr');
-    row.forEach((cell, i) => {
+    const octLabel = octKey === '4b' ? 'C4 alt' : 'C' + octKey;
+    const octNum   = octKey === '4b' ? 4 : parseInt(octKey);
+    // Row color coding by register extremity
+    const isExtreme = octNum <= 1 || octNum >= 7;
+    const isHigh    = octNum >= 5 && octNum <= 6;
+    if (isExtreme) tr.style.opacity = '0.65';
+    // Octave label cell
+    const octCell = document.createElement('td');
+    octCell.className = 'oct-cell';
+    const freqStr = C_FREQ[octNum] ? `<span style="display:block;font-size:0.38rem;opacity:0.5;font-family:'JetBrains Mono',monospace;font-weight:400">${C_FREQ[octNum]} Hz</span>` : '';
+    const extremeIcon = octNum <= 1 ? ' ↓↓' : octNum === 2 ? ' ↓' : octNum >= 8 ? ' ↑↑' : octNum === 7 ? ' ↑' : '';
+    octCell.innerHTML = `${octLabel}${extremeIcon}${freqStr}`;
+    if (octNum <= 1 || octNum >= 7) octCell.style.color = 'rgba(201,168,76,0.55)';
+    tr.appendChild(octCell);
+
+    data.forEach(({n, p, en}) => {
       const td = document.createElement('td');
-      td.textContent = cell;
-      if (cell.includes('#') || cell.includes('b')) td.className = 'sharp-cell';
+      const isS = SHARPS.has(n);
+      if (isS) td.className = 'cs';
+      td.dataset.note = n;
+      td.dataset.oct = octNum;
+      td.innerHTML = `<span class="note-n">${n}</span><span class="note-p">${p}</span>`;
+      td.title = `${en} — pos: ${p}`;
+      td.onclick = () => litPianoKey(n, octNum);
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
+  table.appendChild(tbody);
+}
 
-  // ── RENDER SPEED ──────────────────────────────────────────────────────────
-  const speedContainer = document.getElementById('speedExercises');
-  speedLevels.forEach((lvl, i) => {
-    const div = document.createElement('div');
-    div.className = 'speed-row';
-    const dots = Array.from({length: 8}, (_, j) => `
-      <div class="speed-dot" data-row="${i}" data-col="${j}" onclick="toggleDot(this)"></div>
-    `).join('');
-    div.innerHTML = `
-      <span class="speed-icon">${lvl.icon}</span>
-      <span class="speed-label">${lvl.label}</span>
-      <div class="speed-dots">${dots}</div>
-    `;
-    speedContainer.appendChild(div);
+// ═══════════ PER-OCTAVE PILLS ═══════════
+function buildOctPills(data, containerId, oct) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  data.forEach(({n, p, en}) => {
+    const d = document.createElement('div');
+    d.className = 'note-pill' + (SHARPS.has(n) ? ' sharp' : '');
+    d.dataset.note = n;
+    d.dataset.oct = oct;
+    d.innerHTML = `<span class="nn">${n}<span style="font-size:0.42rem;opacity:0.5;margin-left:2px">${oct}</span></span><span class="np">${en} · ${p}</span>`;
+    d.onclick = () => litPianoKey(n, oct);
+    c.appendChild(d);
   });
+}
 
-  function toggleDot(el) {
-    const row = el.dataset.row;
-    const col = parseInt(el.dataset.col);
-    const dots = document.querySelectorAll(`.speed-dot[data-row="${row}"]`);
-    const currentActive = Array.from(dots).filter(d => d.classList.contains('active')).length;
-    const clickedCol = col;
-    dots.forEach((d, j) => {
-      d.classList.toggle('active', j <= clickedCol);
+// ═══════════ TAB SWITCHER ═══════════
+function switchCromTab(id) {
+  document.querySelectorAll('.oct-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#crom-tabs .oct-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('cp-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// INIT chromatic
+buildPiano();
+buildChromAllTable();
+buildOctPills(OCT_DATA[0], 'oct-pills-0', 0);
+buildOctPills(OCT_DATA[1], 'oct-pills-1', 1);
+buildOctPills(OCT_DATA[2], 'oct-pills-2', 2);
+buildOctPills(OCT_DATA[3], 'oct-pills-3', 3);
+buildOctPills(OCT_DATA[4], 'oct-pills-4a', 4);
+buildOctPills(OCT_DATA['4b'], 'oct-pills-4b', 4);
+buildOctPills(OCT_DATA[5], 'oct-pills-5', 5);
+buildOctPills(OCT_DATA[6], 'oct-pills-6', 6);
+buildOctPills(OCT_DATA[7], 'oct-pills-7', 7);
+buildOctPills(OCT_DATA[8], 'oct-pills-8', 8);
+
+// ═══════════ EXERCISES ═══════════
+let activeEx=null,exCursors={},exAuto={},exAutoInts={};
+
+function buildExercises(){
+  const c=document.getElementById('ex-list');
+  EXERCISES.forEach((ex,idx)=>{
+    const notes=ex.split(' – ');
+    const w=document.createElement('div');
+    w.className='exercise-item';w.id='ex-'+idx;
+    const notesHtml=notes.map((n,i)=>`<span class="en${SHARPS.has(n)?' s':''}" data-ex="${idx}" data-i="${i}">${n}</span>${i<notes.length-1?'<span class="ed">–</span>':''}`).join('');
+    w.innerHTML=`<div class="ex-num">EJERCICIO · ${String(idx+1).padStart(2,'0')} <span style="opacity:0.35;font-size:0.5rem">(${notes.length} notas)</span></div>
+      <div class="ex-notes-wrap" id="en-${idx}">${notesHtml}</div>
+      <div class="player-controls" id="pc-${idx}" style="display:none">
+        <button class="pc-btn" onclick="exPrev(${idx})">◀ PREV</button>
+        <button class="pc-btn" onclick="exNext(${idx})">NEXT ▶</button>
+        <button class="pc-btn" id="auto-${idx}" onclick="toggleAuto(${idx})">▷ AUTO</button>
+        <button class="pc-btn" onclick="exReset(${idx})">↺ RESET</button>
+        <span class="note-cursor" id="nc-${idx}">1 / ${notes.length}</span>
+      </div>`;
+    w.addEventListener('click',e=>{if(e.target.closest('.player-controls'))return;activateEx(idx);});
+    c.appendChild(w);
+  });
+}
+function activateEx(idx){
+  if(activeEx!==null&&activeEx!==idx)deactivateEx(activeEx);
+  activeEx=idx;
+  if(exCursors[idx]===undefined)exCursors[idx]=0;
+  document.getElementById('ex-'+idx).classList.add('active');
+  document.getElementById('pc-'+idx).style.display='flex';
+  renderExCursor(idx);
+}
+function deactivateEx(idx){
+  document.getElementById('ex-'+idx)?.classList.remove('active');
+  const p=document.getElementById('pc-'+idx);if(p)p.style.display='none';
+  stopAuto(idx);
+}
+function exNext(idx){const notes=EXERCISES[idx].split(' – ');exCursors[idx]=Math.min((exCursors[idx]??0)+1,notes.length-1);renderExCursor(idx);}
+function exPrev(idx){exCursors[idx]=Math.max((exCursors[idx]??0)-1,0);renderExCursor(idx);}
+function exReset(idx){exCursors[idx]=0;renderExCursor(idx);stopAuto(idx);}
+function renderExCursor(idx){
+  const cur=exCursors[idx]??0,notes=EXERCISES[idx].split(' – ');
+  document.querySelectorAll(`[data-ex="${idx}"]`).forEach((s,i)=>{
+    s.classList.remove('cur','done');
+    if(i<cur)s.classList.add('done');
+    if(i===cur){s.classList.add('cur');litPianoKey(notes[cur],4);}
+  });
+  const nc=document.getElementById('nc-'+idx);if(nc)nc.textContent=`${cur+1} / ${notes.length}`;
+}
+function toggleAuto(idx){exAuto[idx]?stopAuto(idx):startAuto(idx);}
+function startAuto(idx){
+  exAuto[idx]=true;document.getElementById('auto-'+idx)?.classList.add('on');
+  const notes=EXERCISES[idx].split(' – ');
+  exAutoInts[idx]=setInterval(()=>{
+    if((exCursors[idx]??0)>=notes.length-1){stopAuto(idx);return;}
+    exNext(idx);if(metroRun)playClick(false);
+  },60000/bpm);
+}
+function stopAuto(idx){exAuto[idx]=false;clearInterval(exAutoInts[idx]);document.getElementById('auto-'+idx)?.classList.remove('on');}
+document.addEventListener('keydown',e=>{
+  if(activeEx===null)return;
+  if(e.key==='ArrowRight'){e.preventDefault();exNext(activeEx);}
+  if(e.key==='ArrowLeft'){e.preventDefault();exPrev(activeEx);}
+  if(e.key==='Escape')deactivateEx(activeEx);
+});
+function setFig(el){document.querySelectorAll('.fig-badge').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+buildExercises();
+
+// ═══════════ SCALES ═══════════
+let activeScaleRow=null;
+function renderScales(data){
+  const tb=document.getElementById('scale-tbody');tb.innerHTML='';
+  data.forEach((row,ri)=>{
+    const tr=document.createElement('tr');
+    tr.addEventListener('click',()=>{
+      document.querySelectorAll('.scale-table tr').forEach(r=>r.classList.remove('row-active'));
+      if(activeScaleRow===ri){activeScaleRow=null;return;}
+      tr.classList.add('row-active');activeScaleRow=ri;
     });
-  }
+    row.forEach((cell,ci)=>{
+      const td=document.createElement('td');td.textContent=cell;
+      if(cell.includes('#')||cell.includes('b'))td.className='sc';
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+}
+function filterScales(q){renderScales(q.trim()?SCALES.filter(r=>r[0].toLowerCase().includes(q.toLowerCase())):SCALES);}
+renderScales(SCALES);
 
-  // ── TEMPO SELECTOR ────────────────────────────────────────────────────────
-  function setTempo(el, label) {
-    document.querySelectorAll('.tempo-badge').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
+// ═══════════ SPEED ═══════════
+const SK='musica_speed_v2';
+let speedState=JSON.parse(localStorage.getItem(SK)||'{}');
+function buildSpeed(){
+  const c=document.getElementById('speed-rows');c.innerHTML='';
+  SPEED_LEVELS.forEach((lvl,i)=>{
+    const saved=speedState[i]??0;
+    const d=document.createElement('div');d.className='speed-row';
+    const dots=Array.from({length:10},(_,j)=>`<div class="sdot${j<saved?' on':''}" data-row="${i}" data-col="${j}" onclick="tapDot(this)"></div>`).join('');
+    d.innerHTML=`<span class="speed-icon">${lvl.icon}</span><span class="speed-lbl">${lvl.label}</span><div class="speed-dots">${dots}</div><span class="speed-pct" id="spct-${i}">${Math.round(saved*10)}%</span>`;
+    c.appendChild(d);
+  });
+  updateTotalPct();
+}
+function tapDot(el){
+  const row=el.dataset.row,col=parseInt(el.dataset.col);
+  const dots=document.querySelectorAll(`.sdot[data-row="${row}"]`);
+  const cur=Array.from(dots).filter(d=>d.classList.contains('on')).length;
+  const nv=cur===col+1?col:col+1;
+  dots.forEach((d,j)=>d.classList.toggle('on',j<nv));
+  speedState[row]=nv;localStorage.setItem(SK,JSON.stringify(speedState));
+  document.getElementById('spct-'+row).textContent=Math.round(nv*10)+'%';
+  updateTotalPct();
+}
+function updateTotalPct(){
+  const total=SPEED_LEVELS.length*10;
+  const done=Object.values(speedState).reduce((a,b)=>a+b,0);
+  document.getElementById('total-pct').textContent=Math.round(done/total*100)+'%';
+}
+function clearSpeed(){if(!confirm('¿Reiniciar todo el progreso?'))return;speedState={};localStorage.removeItem(SK);buildSpeed();}
+buildSpeed();
+
+// ═══════════ CIRCLE OF FIFTHS ═══════════
+const COF_MAJOR = ['C','G','D','A','E','B','F#/Gb','Db','Ab','Eb','Bb','F'];
+const COF_MINOR = ['Am','Em','Bm','F#m','C#m','G#m','D#m/Ebm','Bbm','Fm','Cm','Gm','Dm'];
+const COF_SHARPS= [0,1,2,3,4,5,6,-5,-4,-3,-2,-1]; // positive=sharps, negative=flats
+const COF_KEYS_ES = {
+  C:'Do',G:'Sol',D:'Re',A:'La',E:'Mi',B:'Si','F#/Gb':'Fa#/Sol♭',Db:'Re♭',Ab:'La♭',Eb:'Mi♭',Bb:'Si♭',F:'Fa'
+};
+const COF_SCALES = {
+  C:['C','D','E','F','G','A','B'],G:['G','A','B','C','D','E','F#'],
+  D:['D','E','F#','G','A','B','C#'],A:['A','B','C#','D','E','F#','G#'],
+  E:['E','F#','G#','A','B','C#','D#'],B:['B','C#','D#','E','F#','G#','A#'],
+  'F#/Gb':['F#','G#','A#','B','C#','D#','E#'],Db:['Db','Eb','F','Gb','Ab','Bb','C'],
+  Ab:['Ab','Bb','C','Db','Eb','F','G'],Eb:['Eb','F','G','Ab','Bb','C','D'],
+  Bb:['Bb','C','D','Eb','F','G','A'],F:['F','G','A','Bb','C','D','E']
+};
+const COF_DIATONIC = {
+  C:['Cmaj','Dm','Em','Fmaj','Gmaj','Am','Bdim'],
+  G:['Gmaj','Am','Bm','Cmaj','Dmaj','Em','F#dim'],
+  D:['Dmaj','Em','F#m','Gmaj','Amaj','Bm','C#dim'],
+  A:['Amaj','Bm','C#m','Dmaj','Emaj','F#m','G#dim'],
+  E:['Emaj','F#m','G#m','Amaj','Bmaj','C#m','D#dim'],
+  B:['Bmaj','C#m','D#m','Emaj','F#maj','G#m','A#dim'],
+  'F#/Gb':['F#maj','G#m','A#m','Bmaj','C#maj','D#m','E#dim'],
+  Db:['Dbmaj','Ebm','Fm','Gbmaj','Abmaj','Bbm','Cdim'],
+  Ab:['Abmaj','Bbm','Cm','Dbmaj','Ebmaj','Fm','Gdim'],
+  Eb:['Ebmaj','Fm','Gm','Abmaj','Bbmaj','Cm','Ddim'],
+  Bb:['Bbmaj','Cm','Dm','Ebmaj','Fmaj','Gm','Adim'],
+  F:['Fmaj','Gm','Am','Bbmaj','Cmaj','Dm','Edim']
+};
+
+function buildCOF(){
+  const svg=document.getElementById('cof-svg');
+  const R_OUTER=138, R_MID=90, R_INNER=50, R_CENTER=22;
+  const segments=12;
+  for(let i=0;i<segments;i++){
+    const angle=(i/segments)*Math.PI*2 - Math.PI/2 - Math.PI/segments;
+    const nextAngle=((i+1)/segments)*Math.PI*2 - Math.PI/2 - Math.PI/segments;
+    const midAngle=(angle+nextAngle)/2;
+    // Outer (major)
+    const ox1=Math.cos(angle)*R_OUTER, oy1=Math.sin(angle)*R_OUTER;
+    const ox2=Math.cos(nextAngle)*R_OUTER, oy2=Math.sin(nextAngle)*R_OUTER;
+    const mx1=Math.cos(angle)*R_MID, my1=Math.sin(angle)*R_MID;
+    const mx2=Math.cos(nextAngle)*R_MID, my2=Math.sin(nextAngle)*R_MID;
+    // Color: warm gold tones for major
+    const hue=20+i*8;
+    const outerPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d1=`M ${mx1} ${my1} L ${ox1} ${oy1} A ${R_OUTER} ${R_OUTER} 0 0 1 ${ox2} ${oy2} L ${mx2} ${my2} A ${R_MID} ${R_MID} 0 0 0 ${mx1} ${my1}`;
+    outerPath.setAttribute('d',d1);
+    outerPath.setAttribute('fill',`hsla(${hue},35%,22%,0.9)`);
+    outerPath.setAttribute('stroke','rgba(201,168,76,0.3)');
+    outerPath.setAttribute('stroke-width','1');
+    outerPath.setAttribute('class','cof-segment');
+    outerPath.setAttribute('data-key',COF_MAJOR[i]);
+    outerPath.setAttribute('data-type','major');
+    outerPath.addEventListener('click',()=>selectCOFKey(COF_MAJOR[i],'major',outerPath));
+    svg.appendChild(outerPath);
+    // Outer label
+    const lx=Math.cos(midAngle)*114, ly=Math.sin(midAngle)*114;
+    const lt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lt.setAttribute('x',lx); lt.setAttribute('y',ly);
+    lt.setAttribute('text-anchor','middle'); lt.setAttribute('dominant-baseline','central');
+    lt.setAttribute('font-family','Cinzel, serif'); lt.setAttribute('font-size','10');
+    lt.setAttribute('font-weight','700'); lt.setAttribute('fill','#E8C96A');
+    lt.setAttribute('pointer-events','none');
+    lt.textContent=COF_MAJOR[i];
+    svg.appendChild(lt);
+    // Inner (minor)
+    const ix1=Math.cos(angle)*R_MID, iy1=Math.sin(angle)*R_MID;
+    const ix2=Math.cos(nextAngle)*R_MID, iy2=Math.sin(nextAngle)*R_MID;
+    const ri1=Math.cos(angle)*R_INNER, ri2y=Math.sin(angle)*R_INNER;
+    const ri2=Math.cos(nextAngle)*R_INNER, ri2y2=Math.sin(nextAngle)*R_INNER;
+    const innerPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d2=`M ${ri1} ${ri2y} L ${ix1} ${iy1} A ${R_MID} ${R_MID} 0 0 1 ${ix2} ${iy2} L ${ri2} ${ri2y2} A ${R_INNER} ${R_INNER} 0 0 0 ${ri1} ${ri2y}`;
+    innerPath.setAttribute('d',d2);
+    innerPath.setAttribute('fill',`hsla(${hue},20%,16%,0.9)`);
+    innerPath.setAttribute('stroke','rgba(201,168,76,0.2)');
+    innerPath.setAttribute('stroke-width','1');
+    innerPath.setAttribute('class','cof-segment');
+    innerPath.setAttribute('data-key',COF_MINOR[i]);
+    innerPath.setAttribute('data-type','minor');
+    innerPath.addEventListener('click',()=>selectCOFKey(COF_MINOR[i],'minor',innerPath));
+    svg.appendChild(innerPath);
+    // Inner label
+    const ilx=Math.cos(midAngle)*70, ily=Math.sin(midAngle)*70;
+    const ilt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    ilt.setAttribute('x',ilx); ilt.setAttribute('y',ily);
+    ilt.setAttribute('text-anchor','middle'); ilt.setAttribute('dominant-baseline','central');
+    ilt.setAttribute('font-family','Cinzel, serif'); ilt.setAttribute('font-size','7.5');
+    ilt.setAttribute('fill','rgba(245,236,215,0.65)'); ilt.setAttribute('pointer-events','none');
+    ilt.textContent=COF_MINOR[i];
+    svg.appendChild(ilt);
   }
+  // Center circle
+  const cc=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  cc.setAttribute('cx','0'); cc.setAttribute('cy','0'); cc.setAttribute('r',R_CENTER.toString());
+  cc.setAttribute('fill','rgba(10,8,6,0.95)'); cc.setAttribute('stroke','rgba(201,168,76,0.35)'); cc.setAttribute('stroke-width','1');
+  svg.appendChild(cc);
+  const ct=document.createElementNS('http://www.w3.org/2000/svg','text');
+  ct.setAttribute('x','0'); ct.setAttribute('y','0'); ct.setAttribute('text-anchor','middle'); ct.setAttribute('dominant-baseline','central');
+  ct.setAttribute('font-family','Cinzel, serif'); ct.setAttribute('font-size','7'); ct.setAttribute('fill','rgba(201,168,76,0.5)');
+  ct.textContent='CÍRCULO'; svg.appendChild(ct);
+}
+
+function selectCOFKey(key, type, el){
+  document.querySelectorAll('.cof-segment').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  const info=document.getElementById('cof-info');
+  const majorKey=type==='major'?key:COF_MAJOR[COF_MINOR.indexOf(key)];
+  const minorKey=type==='minor'?key:COF_MINOR[COF_MAJOR.indexOf(majorKey)];
+  const sharpCount=COF_SHARPS[COF_MAJOR.indexOf(majorKey)];
+  const sig=sharpCount===0?'Ninguna':sharpCount>0?`${sharpCount} sostenido${sharpCount>1?'s':''}`:`${Math.abs(sharpCount)} bemol${Math.abs(sharpCount)>1?'es':''}`;
+  const scale=COF_SCALES[majorKey]||[];
+  const diatonic=COF_DIATONIC[majorKey]||[];
+  const scaleChips=scale.map((n,i)=>{
+    const isSharp=n.includes('#')||n.includes('b');
+    return `<span class="cof-note-chip${i===0?' root':''}${isSharp?' sharp':''}">${n}</span>`;
+  }).join('');
+  const diatChips=diatonic.map(a=>{
+    const isMin=a.includes('m')&&!a.includes('maj'),isDim=a.includes('dim');
+    const col=isMin?'color:rgba(200,120,80,0.9)':isDim?'color:rgba(180,60,60,0.8)':'color:var(--gold-light)';
+    return `<span class="cof-note-chip" style="${col}">${a}</span>`;
+  }).join('');
+  const esName=COF_KEYS_ES[majorKey]||majorKey;
+  info.innerHTML=`
+    <div class="cof-key-name mb-3">${type==='major'?key:minorKey} <span style="font-size:0.8rem;opacity:0.5">${type==='major'?'Mayor':'Menor'}</span></div>
+    <div class="cof-detail-row"><span class="cof-detail-lbl">NOMBRE ES</span><span class="cof-detail-val">${esName} ${type==='major'?'Mayor':'Menor'}</span></div>
+    <div class="cof-detail-row"><span class="cof-detail-lbl">RELATIVA</span><span class="cof-detail-val">${type==='major'?minorKey+' menor':majorKey+' mayor'}</span></div>
+    <div class="cof-detail-row"><span class="cof-detail-lbl">ARMADURA</span><span class="cof-detail-val">${sig}</span></div>
+    <div class="cof-detail-row"><span class="cof-detail-lbl">ESCALA</span><span class="cof-detail-val">${scaleChips}</span></div>
+    <div class="cof-detail-row" style="border-bottom:none"><span class="cof-detail-lbl">DIATÓNICOS</span><span class="cof-detail-val">${diatChips}</span></div>
+  `;
+}
+buildCOF();
+
+// ═══════════ INTERVALS ═══════════
+const INTERVALS = [
+  {semi:0,  name:'Unísono',         abbr:'P1', quality:'Perfecto', example:'C → C', sound:'Misma nota',               cls:'int-row-perfect'},
+  {semi:1,  name:'2ª menor',        abbr:'m2', quality:'Menor',    example:'C → D♭',sound:'"Tiburón" (Jaws)',          cls:'int-row-minor'},
+  {semi:2,  name:'2ª mayor',        abbr:'M2', quality:'Mayor',    example:'C → D', sound:'"Cumpleaños feliz"',        cls:'int-row-major'},
+  {semi:3,  name:'3ª menor',        abbr:'m3', quality:'Menor',    example:'C → E♭',sound:'"Smoke on the Water"',      cls:'int-row-minor'},
+  {semi:4,  name:'3ª mayor',        abbr:'M3', quality:'Mayor',    example:'C → E', sound:'"When the Saints"',         cls:'int-row-major'},
+  {semi:5,  name:'4ª justa',        abbr:'P4', quality:'Perfecto', example:'C → F', sound:'"Here Comes the Bride"',    cls:'int-row-perfect'},
+  {semi:6,  name:'Tritono (4ª aug /5ª dis)', abbr:'TT',quality:'Disminuido/Aug',example:'C → F#',sound:'Siniestro, disonante', cls:'int-row-tritone'},
+  {semi:7,  name:'5ª justa',        abbr:'P5', quality:'Perfecto', example:'C → G', sound:'"Star Wars" tema',          cls:'int-row-perfect'},
+  {semi:8,  name:'6ª menor',        abbr:'m6', quality:'Menor',    example:'C → A♭',sound:'"The Entertainer"',         cls:'int-row-minor'},
+  {semi:9,  name:'6ª mayor',        abbr:'M6', quality:'Mayor',    example:'C → A', sound:'"My Way" (inicio)',         cls:'int-row-major'},
+  {semi:10, name:'7ª menor',        abbr:'m7', quality:'Menor',    example:'C → B♭',sound:'"Somewhere" (West Side)',   cls:'int-row-minor'},
+  {semi:11, name:'7ª mayor',        abbr:'M7', quality:'Mayor',    example:'C → B', sound:'Tenso, casi octava',        cls:'int-row-major'},
+  {semi:12, name:'Octava',          abbr:'P8', quality:'Perfecto', example:'C → C\'',sound:'Misma nota, +8va',         cls:'int-row-perfect'},
+];
+function buildIntervals(){
+  const tb=document.getElementById('int-tbody');
+  INTERVALS.forEach(iv=>{
+    const tr=document.createElement('tr');
+    tr.className=iv.cls;
+    tr.innerHTML=`<td class="semis">${iv.semi}</td><td class="iname">${iv.name}</td><td class="abbr">${iv.abbr}</td><td class="qual">${iv.quality}</td><td class="example">${iv.example}</td><td class="sound">${iv.sound}</td>`;
+    tb.appendChild(tr);
+  });
+}
+buildIntervals();
+
+// ═══════════ CHORDS ═══════════
+const CHORD_TYPES = [
+  {name:'Mayor',         sym:'maj',  formula:[0,4,7],      desc:'1 - 3 - 5'},
+  {name:'Menor',         sym:'m',    formula:[0,3,7],      desc:'1 - ♭3 - 5'},
+  {name:'Aumentado',     sym:'aug',  formula:[0,4,8],      desc:'1 - 3 - #5'},
+  {name:'Disminuido',    sym:'dim',  formula:[0,3,6],      desc:'1 - ♭3 - ♭5'},
+  {name:'Sus2',          sym:'sus2', formula:[0,2,7],      desc:'1 - 2 - 5'},
+  {name:'Sus4',          sym:'sus4', formula:[0,5,7],      desc:'1 - 4 - 5'},
+  {name:'Dom 7',         sym:'7',    formula:[0,4,7,10],   desc:'1 - 3 - 5 - ♭7'},
+  {name:'Mayor 7',       sym:'maj7', formula:[0,4,7,11],   desc:'1 - 3 - 5 - 7'},
+  {name:'Menor 7',       sym:'m7',   formula:[0,3,7,10],   desc:'1 - ♭3 - 5 - ♭7'},
+  {name:'Menor 7♭5',    sym:'m7b5', formula:[0,3,6,10],   desc:'1 - ♭3 - ♭5 - ♭7'},
+  {name:'Dismin. 7',     sym:'dim7', formula:[0,3,6,9],    desc:'1 - ♭3 - ♭5 - ♭♭7'},
+  {name:'Dom 9',         sym:'9',    formula:[0,4,7,10,14],desc:'1 - 3 - 5 - ♭7 - 9'},
+  {name:'Mayor 9',       sym:'maj9', formula:[0,4,7,11,14],desc:'1 - 3 - 5 - 7 - 9'},
+  {name:'Add9',          sym:'add9', formula:[0,4,7,14],   desc:'1 - 3 - 5 - 9'},
+  {name:'6ª mayor',      sym:'6',    formula:[0,4,7,9],    desc:'1 - 3 - 5 - 6'},
+  {name:'6ª menor',      sym:'m6',   formula:[0,3,7,9],    desc:'1 - ♭3 - 5 - 6'},
+];
+const CHROMATIC_EN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const CHORD_ROOT_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+let activeChordRoot='C';
+
+function buildChordRoots(){
+  const c=document.getElementById('chord-roots');
+  CHORD_ROOT_NAMES.forEach(r=>{
+    const b=document.createElement('button');
+    b.className='root-btn'+(r==='C'?' active':'');
+    b.textContent=r;
+    b.onclick=()=>{activeChordRoot=r;document.querySelectorAll('.root-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');buildChordGrid();};
+    c.appendChild(b);
+  });
+}
+function buildChordGrid(){
+  const c=document.getElementById('chord-grid');c.innerHTML='';
+  const rootIdx=CHROMATIC_EN.indexOf(activeChordRoot);
+  CHORD_TYPES.forEach(ct=>{
+    const notes=ct.formula.map(semi=>CHROMATIC_EN[(rootIdx+semi)%12]);
+    const card=document.createElement('div');
+    card.className='chord-card';
+    const isSharp=n=>n.includes('#');
+    const noteChips=notes.map((n,i)=>`<span class="chord-n${i===0?' root-n':''}${isSharp(n)?' sharp-n':''}">${n}</span>`).join('');
+    card.innerHTML=`<div class="chord-name">${activeChordRoot}<span style="font-size:0.7rem;opacity:0.8">${ct.sym}</span></div><div class="chord-symbol">${ct.name}</div><div class="chord-notes-row">${noteChips}</div><div class="chord-formula">${ct.desc}</div>`;
+    card.onclick=()=>{document.querySelectorAll('.chord-card').forEach(x=>x.classList.remove('active'));card.classList.toggle('active');};
+    c.appendChild(card);
+  });
+}
+buildChordRoots();
+buildChordGrid();
+
+// ═══════════ QUIZ ═══════════
+let quizMode='cifrado', quizCorrect=0, quizTotal=0, quizStreak=0, quizBest=0;
+let quizAnswered=false;
+
+const QUIZ_MODES={
+  cifrado:{
+    gen:()=>{
+      const note=CHROMATIC_12[Math.floor(Math.random()*12)];
+      const ans=NOTE_EN[note];
+      const opts=shuffleArr([ans,...pickWrong(Object.values(NOTE_EN),ans,3)]);
+      return {q:note,sub:'¿Cuál es el cifrado en inglés?',opts,ans};
+    }
+  },
+  cifrado_rev:{
+    gen:()=>{
+      const note=CHROMATIC_12[Math.floor(Math.random()*12)];
+      const enNote=NOTE_EN[note];
+      const ans=note;
+      const opts=shuffleArr([ans,...pickWrong(CHROMATIC_12,ans,3)]);
+      return {q:enNote,sub:'¿Cuál es el nombre en español?',opts,ans};
+    }
+  },
+  interval:{
+    gen:()=>{
+      const iv=INTERVALS[Math.floor(Math.random()*INTERVALS.length)];
+      const ans=iv.name;
+      const opts=shuffleArr([ans,...pickWrong(INTERVALS.map(i=>i.name),ans,3)]);
+      return {q:`${iv.semi} semitonos`,sub:'¿Cómo se llama este intervalo?',opts,ans};
+    }
+  },
+  scale:{
+    gen:()=>{
+      const keys=Object.keys(COF_SCALES);
+      const key=keys[Math.floor(Math.random()*keys.length)];
+      const scale=COF_SCALES[key];
+      const degree=Math.floor(Math.random()*6)+1; // grados 1-7 (1-indexed)
+      const ans=scale[degree];
+      const wrongNotes=CHROMATIC_EN.filter(n=>n!==ans);
+      const opts=shuffleArr([ans,...pickWrong(wrongNotes,ans,3)]);
+      const ordinals=['I','II','III','IV','V','VI','VII'];
+      return {q:`${key} — grado ${ordinals[degree]}`,sub:'¿Cuál es esta nota en la escala?',opts,ans};
+    }
+  },
+  chord:{
+    gen:()=>{
+      const ct=CHORD_TYPES[Math.floor(Math.random()*CHORD_TYPES.length)];
+      const ans=ct.name;
+      const opts=shuffleArr([ans,...pickWrong(CHORD_TYPES.map(c=>c.name),ans,3)]);
+      return {q:ct.desc,sub:'¿Qué tipo de acorde es esta fórmula?',opts,ans};
+    }
+  }
+};
+
+function shuffleArr(a){return a.sort(()=>Math.random()-0.5);}
+function pickWrong(pool,exclude,n){
+  const filtered=pool.filter(x=>x!==exclude);
+  const out=[];
+  const used=new Set();
+  while(out.length<n&&out.length<filtered.length){
+    const r=filtered[Math.floor(Math.random()*filtered.length)];
+    if(!used.has(r)){used.add(r);out.push(r);}
+  }
+  return out;
+}
+
+function setQuizMode(mode,btn){
+  quizMode=mode;
+  document.querySelectorAll('.quiz-mode-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  nextQuizQuestion();
+}
+function nextQuizQuestion(){
+  quizAnswered=false;
+  const gen=QUIZ_MODES[quizMode];if(!gen)return;
+  const {q,sub,opts,ans}=gen.gen();
+  document.getElementById('quiz-q').textContent=q;
+  document.getElementById('quiz-sub').textContent=sub;
+  const container=document.getElementById('quiz-opts');
+  container.innerHTML='';
+  opts.forEach(opt=>{
+    const b=document.createElement('button');
+    b.className='quiz-opt';
+    b.textContent=opt;
+    b.onclick=()=>answerQuiz(b,opt,ans,opts);
+    container.appendChild(b);
+  });
+  document.getElementById('quiz-card').classList.remove('anim-shake','anim-pop');
+}
+function answerQuiz(btn,chosen,correct,allOpts){
+  if(quizAnswered)return;
+  quizAnswered=true;
+  quizTotal++;
+  document.querySelectorAll('.quiz-opt').forEach(b=>{b.classList.add('disabled');if(b.textContent===correct)b.classList.add('correct');});
+  if(chosen===correct){
+    quizCorrect++;quizStreak++;
+    if(quizStreak>quizBest)quizBest=quizStreak;
+    btn.classList.add('correct');
+    document.getElementById('quiz-card').classList.add('anim-pop');
+  } else {
+    quizStreak=0;
+    btn.classList.add('wrong');
+    document.getElementById('quiz-card').classList.add('anim-shake');
+  }
+  document.getElementById('q-correct').textContent=quizCorrect;
+  document.getElementById('q-total').textContent=quizTotal;
+  document.getElementById('q-streak').textContent=quizStreak;
+  document.getElementById('q-streak2').textContent=quizStreak;
+  document.getElementById('q-best').textContent=quizBest;
+}
+function resetQuiz(){quizCorrect=0;quizTotal=0;quizStreak=0;quizBest=0;document.getElementById('q-correct').textContent=0;document.getElementById('q-total').textContent=0;document.getElementById('q-streak').textContent=0;document.getElementById('q-streak2').textContent=0;document.getElementById('q-best').textContent=0;nextQuizQuestion();}
+
+// ═══════════ MINOR SCALES ═══════════
+const MINOR_NATURAL=[['A','B','C','D','E','F','G','A'],['E','F#','G','A','B','C','D','E'],['B','C#','D','E','F#','G','A','B'],['F#','G#','A','B','C#','D','E','F#'],['C#','D#','E','F#','G#','A','B','C#'],['G#','A#','B','C#','D#','E','F#','G#'],['D#','E#','F#','G#','A#','B','C#','D#'],['D','E','F','G','A','Bb','C','D'],['G','A','Bb','C','D','Eb','F','G'],['C','D','Eb','F','G','Ab','Bb','C'],['F','G','Ab','Bb','C','Db','Eb','F'],['Bb','C','Db','Eb','F','Gb','Ab','Bb']];
+const MINOR_HARMONIC=[['A','B','C','D','E','F','G#','A'],['E','F#','G','A','B','C','D#','E'],['B','C#','D','E','F#','G','A#','B'],['F#','G#','A','B','C#','D','E#','F#'],['C#','D#','E','F#','G#','A','B#','C#'],['G#','A#','B','C#','D#','E','F##','G#'],['D#','E#','F#','G#','A#','B','C##','D#'],['D','E','F','G','A','Bb','C#','D'],['G','A','Bb','C','D','Eb','F#','G'],['C','D','Eb','F','G','Ab','B','C'],['F','G','Ab','Bb','C','Db','E','F'],['Bb','C','Db','Eb','F','Gb','A','Bb']];
+const MINOR_MELODIC=[['A','B','C','D','E','F#','G#','A'],['E','F#','G','A','B','C#','D#','E'],['B','C#','D','E','F#','G#','A#','B'],['F#','G#','A','B','C#','D#','E#','F#'],['C#','D#','E','F#','G#','A#','B#','C#'],['G#','A#','B','C#','D#','E#','F##','G#'],['D#','E#','F#','G#','A#','B#','C##','D#'],['D','E','F','G','A','B','C#','D'],['G','A','Bb','C','D','E','F#','G'],['C','D','Eb','F','G','A','B','C'],['F','G','Ab','Bb','C','D','E','F'],['Bb','C','Db','Eb','F','G','A','Bb']];
+const MINOR_ALTERED_IDX={natural:[],harmonic:[6],melodic:[5,6]};
+const MINOR_FORMULA={natural:'T – ½ – T – T – ½ – T – T',harmonic:'T – ½ – T – T – ½ – 1½ – ½',melodic:'T – ½ – T – T – T – T – ½'};
+let minorType='natural';
+function setMinorType(t,btn){
+  minorType=t;
+  document.querySelectorAll('.minor-type-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMinor();
+}
+function renderMinor(){
+  const tb=document.getElementById('minor-tbody');tb.innerHTML='';
+  const data=minorType==='natural'?MINOR_NATURAL:minorType==='harmonic'?MINOR_HARMONIC:MINOR_MELODIC;
+  const altIdx=MINOR_ALTERED_IDX[minorType];
+  data.forEach(row=>{
+    const tr=document.createElement('tr');
+    row.forEach((cell,ci)=>{
+      const td=document.createElement('td');
+      td.textContent=cell;
+      const isAlt=ci>0&&altIdx.includes(ci-1); // ci-1 because first col is tonic
+      if(ci===0){td.style.fontFamily="'Cinzel',serif";td.style.fontWeight='600';td.style.color='var(--gold-light)';td.style.background='rgba(201,168,76,0.1)';}
+      if(isAlt) td.className='altered';
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  document.getElementById('minor-formula').textContent=MINOR_FORMULA[minorType];
+}
+renderMinor();
+
+// ═══════════ GREEK MODES ═══════════
+const MODES=[
+  {name:'Jónico',    greek:'Ionian',   degree:1, formula:'T–T–½–T–T–T–½', char:'Brillante, alegre. ES la escala mayor.',       color:'#e8c96a', offsets:[0,2,4,5,7,9,11]},
+  {name:'Dórico',    greek:'Dorian',   degree:2, formula:'T–½–T–T–T–½–T', char:'Menor con 6ª mayor. Jazz, funk, blues.',        color:'#80a8e0', offsets:[0,2,3,5,7,9,10]},
+  {name:'Frigio',    greek:'Phrygian', degree:3, formula:'½–T–T–T–½–T–T', char:'Oscuro, flamenco. 2ª menor característica.',    color:'#e07070', offsets:[0,1,3,5,7,8,10]},
+  {name:'Lidio',     greek:'Lydian',   degree:4, formula:'T–T–T–½–T–T–½', char:'Soñador, mágico. #4 característica.',           color:'#90d890', offsets:[0,2,4,6,7,9,11]},
+  {name:'Mixolidio', greek:'Mixolydian',degree:5,formula:'T–T–½–T–T–½–T', char:'Mayor con ♭7. Rock, blues, dominante.',         color:'#e0a860', offsets:[0,2,4,5,7,9,10]},
+  {name:'Eólico',    greek:'Aeolian',  degree:6, formula:'T–½–T–T–½–T–T', char:'Menor natural. Melancólico, clásico.',           color:'#a880d8', offsets:[0,2,3,5,7,8,10]},
+  {name:'Locrio',    greek:'Locrian',  degree:7, formula:'½–T–T–½–T–T–T', char:'Oscuro, inestable. ♭5 y ♭2. Avant-garde.',      color:'#808080', offsets:[0,1,3,5,6,8,10]},
+];
+const MAJOR_OFFSETS=[0,2,4,5,7,9,11];
+let modeRoot='C';
+function buildModeRoots(){
+  const c=document.getElementById('mode-root-btns');
+  CHORD_ROOT_NAMES.forEach(r=>{
+    const b=document.createElement('button');b.className='prog-root-sel'+(r==='C'?' active':'');
+    b.textContent=r;b.onclick=()=>{modeRoot=r;document.querySelectorAll('#mode-root-btns .prog-root-sel').forEach(x=>x.classList.remove('active'));b.classList.add('active');buildModeGrid();};
+    c.appendChild(b);
+  });
+}
+function buildModeGrid(){
+  const grid=document.getElementById('mode-grid');grid.innerHTML='';
+  const rootIdx=CHROMATIC_EN.indexOf(modeRoot);
+  MODES.forEach(mode=>{
+    const notes=mode.offsets.map(o=>CHROMATIC_EN[(rootIdx+o)%12]);
+    const majorNotes=MAJOR_OFFSETS.map(o=>CHROMATIC_EN[(rootIdx+o)%12]);
+    const card=document.createElement('div');card.className='mode-card';
+    card.style.setProperty('--mode-color',mode.color);
+    card.style.cssText+=`;border-left:3px solid ${mode.color}40;`;
+    card.addEventListener('click',()=>{document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('active'));card.classList.toggle('active');});
+    const noteChips=notes.map((n,i)=>{
+      const isAlt=n!==majorNotes[i];
+      const isRoot=i===0;
+      return `<span class="mode-note${isRoot?' root-note':''}${isAlt&&!isRoot?' altered-note':''}">${n}</span>`;
+    }).join('');
+    card.innerHTML=`
+      <div class="mode-name" style="color:${mode.color}">${mode.name}</div>
+      <div class="mode-start">${mode.greek} · ${modeRoot} · Grado ${['I','II','III','IV','V','VI','VII'][mode.degree-1]}</div>
+      <div class="mode-formula">${mode.formula}</div>
+      <div class="mode-example">${noteChips}</div>
+      <div class="mode-char">${mode.char}</div>`;
+    grid.appendChild(card);
+  });
+}
+buildModeRoots();buildModeGrid();
+
+// ═══════════ PROGRESSIONS ═══════════
+const PROG_TEMPLATES=[
+  {name:'I – IV – V – I',   genre:'Clásica / Folk',     roman:['I','IV','V','I'],    types:['maj','maj','maj','maj'], desc:'La progresión más fundamental de la música occidental.'},
+  {name:'I – V – vi – IV',  genre:'Pop moderno',         roman:['I','V','vi','IV'],   types:['maj','maj','min','maj'], desc:'"Let It Be", "With or Without You", miles de canciones pop.'},
+  {name:'ii – V – I',       genre:'Jazz',                roman:['ii','V','I'],        types:['min','dom','maj'],       desc:'Progresión cadencial del jazz. Base del bebop y standards.'},
+  {name:'I – vi – IV – V',  genre:'Doo-wop / Oldies',   roman:['I','vi','IV','V'],   types:['maj','min','maj','maj'], desc:'"Stand By Me", "Earth Angel". El sonido de los 50s.'},
+  {name:'12 Compases Blues', genre:'Blues / Rock',        roman:['I','I','I','I','IV','IV','I','I','V','IV','I','V'], types:['dom','dom','dom','dom','dom','dom','dom','dom','dom','dom','dom','dom'], desc:'La forma más influyente del S. XX. Base del rock, jazz y R&B.'},
+  {name:'I – IV – vi – V',  genre:'Pop / Rock',          roman:['I','IV','vi','V'],   types:['maj','maj','min','maj'], desc:'Variante muy usada en baladas y rock alternativo.'},
+  {name:'vi – IV – I – V',  genre:'Pop alternativo',     roman:['vi','IV','I','V'],   types:['min','maj','maj','maj'], desc:'Versión "oscura" del ciclo de pop. Muy cinematográfica.'},
+  {name:'I – ♭VII – IV – I',genre:'Rock / Modal',        roman:['I','♭VII','IV','I'], types:['maj','maj','maj','maj'], desc:'"Sweet Home Alabama", "La Bamba". Sonido modal mixolidio.'},
+  {name:'ii – V – I – vi',  genre:'Jazz extendido',      roman:['ii','V','I','vi'],   types:['min','dom','maj','min'], desc:'Turnaround del jazz. Regresa al ii para ciclos continuos.'},
+  {name:'I – III – IV – iv',genre:'Clásica / Drama',     roman:['I','III','IV','iv'], types:['maj','maj','maj','min'], desc:'La IV menor crea un momento dramático inesperado.'},
+  {name:'Pachelbel Canon',  genre:'Barroco / Pop',       roman:['I','V','vi','iii','IV','I','IV','V'], types:['maj','maj','min','min','maj','maj','maj','maj'], desc:'La progresión más reconocida del barroco, base de pop moderno.'},
+  {name:'Andaluza (Frigia)',genre:'Flamenco / Español',  roman:['i','♭VII','♭VI','V'],types:['min','maj','maj','dom'], desc:'La cadencia andaluza. Define el sonido flamenco y español.'},
+];
+
+const ROMAN_SEMITONES={I:0,II:2,III:4,IV:5,V:7,VI:9,VII:11,ii:2,iii:4,vi:9,vii:11,'♭VII':10,'♭VI':8,'♭III':3};
+let progRoot='C';
+function buildProgRoots(){
+  const c=document.getElementById('prog-root-btns');
+  CHORD_ROOT_NAMES.forEach(r=>{
+    const b=document.createElement('button');b.className='prog-root-sel'+(r==='C'?' active':'');
+    b.textContent=r;b.onclick=()=>{progRoot=r;document.querySelectorAll('#prog-root-btns .prog-root-sel').forEach(x=>x.classList.remove('active'));b.classList.add('active');buildProgGrid();};
+    c.appendChild(b);
+  });
+}
+function buildProgGrid(){
+  const grid=document.getElementById('prog-grid');grid.innerHTML='';
+  const rootIdx=CHROMATIC_EN.indexOf(progRoot);
+  PROG_TEMPLATES.forEach(pt=>{
+    const card=document.createElement('div');card.className='prog-card';
+    const isTonic=(r)=>r==='I'||r==='i';
+    const isDom=(r)=>r==='V'||r==='dom'||r==='♭VII';
+    const chordsHtml=pt.roman.map((r,i)=>{
+      const semi=ROMAN_SEMITONES[r]??0;
+      const noteEn=CHROMATIC_EN[(rootIdx+semi)%12];
+      const suffix=pt.types[i]==='min'?'m':pt.types[i]==='dom'?'7':'';
+      const cls=isTonic(r)?'tonic':isDom(r)?'dom':'';
+      return `<span class="prog-chord-chip${cls?' '+cls:''}">${noteEn}${suffix}<br><span style="font-size:0.48rem;opacity:0.55">${r}</span></span>${i<pt.roman.length-1?'<span class="prog-arrow">→</span>':''}`;
+    }).join('');
+    card.innerHTML=`<div class="prog-name">${pt.name}</div><div class="prog-genre">${pt.genre}</div><div class="prog-chords">${chordsHtml}</div><div class="prog-desc">${pt.desc}</div>`;
+    card.onclick=()=>{document.querySelectorAll('.prog-card').forEach(x=>x.classList.remove('active'));card.classList.toggle('active');};
+    grid.appendChild(card);
+  });
+}
+buildProgRoots();buildProgGrid();
+
+// ═══════════ CADENCES ═══════════
+const CADENCES=[
+  {name:'Auténtica Perfecta', type:'CONCLUSIVA', motion:[{label:'V',cls:'dominant'},{label:'→'},{label:'I',cls:'tonic'}], desc:'El V con la tónica en el soprano va al I. Cierre completo y definitivo. La más fuerte de todas las cadencias.', feel:'Resolución total. Punto final.'},
+  {name:'Auténtica Imperfecta',type:'CONCLUSIVA',motion:[{label:'V',cls:'dominant'},{label:'→'},{label:'I',cls:'tonic'}], desc:'El V va al I pero la tónica no está en el soprano, o el V está en inversión. Cierre menos rotundo.', feel:'Resolución, pero con apertura.'},
+  {name:'Plagal',             type:'CONCLUSIVA', motion:[{label:'IV',cls:'subdominant'},{label:'→'},{label:'I',cls:'tonic'}], desc:'"Amén" de la música religiosa. IV va a I. Suave, contemplativa. Típica en himnos y música coral.', feel:'Paz, devoción, cierre suave.'},
+  {name:'Semi-cadencia',      type:'SUSPENSIVA', motion:[{label:'I'},{label:'→'},{label:'V',cls:'dominant'}], desc:'Termina en el acorde de dominante (V). No resuelve. Crea expectativa, como una coma en una frase.', feel:'Pregunta, expectativa, pausa.'},
+  {name:'Engañosa (Rota)',    type:'EVASIVA',    motion:[{label:'V',cls:'dominant'},{label:'→'},{label:'vi',cls:'subdominant'}], desc:'El V resuelve inesperadamente al vi (submediante) en vez del I. Sorpresa armónica. Muy usada en música romántica.', feel:'Sorpresa, evasión, drama.'},
+  {name:'Frigia',             type:'MODAL',      motion:[{label:'iv',cls:'subdominant'},{label:'→'},{label:'V',cls:'dominant'}], desc:'En modo menor: iv⁶ va al V. Muy usada en el barroco. La voz del bajo baja por semitono (♭6→5).', feel:'Oscuridad, tensión, barroco.'},
+  {name:'Lidio-Dórica',       type:'MODAL',      motion:[{label:'II',cls:'subdominant'},{label:'→'},{label:'I',cls:'tonic'}], desc:'El II mayor (napolitano) resuelve al I. Característica del flamenco y música española. Muy dramática.', feel:'Drama intenso, flamenco.'},
+  {name:'Deceptiva al IV',    type:'EVASIVA',    motion:[{label:'V',cls:'dominant'},{label:'→'},{label:'IV',cls:'subdominant'}], desc:'El V resuelve al IV en vez del I. Menos frecuente, crea una sensación de retroceso armónico interesante.', feel:'Retroceso, sorpresa suave.'},
+];
+function buildCadences(){
+  const grid=document.getElementById('cad-grid');
+  CADENCES.forEach(cad=>{
+    const card=document.createElement('div');card.className='cad-card';
+    const motionHtml=cad.motion.map(m=>m.label==='→'?`<span class="cad-arrow">→</span>`:`<span class="cad-chord${m.cls?' '+m.cls:''}">${m.label}</span>`).join('');
+    card.innerHTML=`<div class="cad-name">${cad.name}</div><div class="cad-type">${cad.type}</div><div class="cad-motion">${motionHtml}</div><div class="cad-desc">${cad.desc}</div><div class="cad-feeling">✦ ${cad.feel}</div>`;
+    grid.appendChild(card);
+  });
+}
+buildCadences();
+
+// ═══════════ RHYTHM ═══════════
+const RHYTHM_FIGURES=[
+  {sym:'𝅝',  name:'Redonda',       beats:4,  fraction:'4/4', fill:100, subdiv:4,  desc:'4 tiempos — la más larga'},
+  {sym:'𝅗',  name:'Blanca',        beats:2,  fraction:'2/4', fill:50,  subdiv:2,  desc:'2 tiempos'},
+  {sym:'♩',  name:'Negra',         beats:1,  fraction:'1/4', fill:25,  subdiv:1,  desc:'1 tiempo — pulso base'},
+  {sym:'♪',  name:'Corchea',       beats:0.5,fraction:'1/8', fill:12.5,subdiv:1,  desc:'½ tiempo'},
+  {sym:'𝅘𝅥𝅯', name:'Semicorchea',   beats:0.25,fraction:'1/16',fill:6.25,subdiv:1,desc:'¼ tiempo'},
+  {sym:'𝅘𝅥𝅱', name:'Fusa',          beats:0.125,fraction:'1/32',fill:3.125,subdiv:1,desc:'⅛ tiempo'},
+  {sym:'𝄽',  name:'Silencio Negra', beats:1, fraction:'1/4', fill:25,  subdiv:1,  desc:'Pausa de 1 tiempo', rest:true},
+  {sym:'𝄼',  name:'Silencio Corchea',beats:0.5,fraction:'1/8',fill:12.5,subdiv:1,desc:'Pausa de ½ tiempo', rest:true},
+];
+const TIME_SIGS=[
+  {sig:'4/4',name:'Compás Cuaternario',desc:'4 pulsos por compás. El más común en música occidental, pop, jazz.',beats:4,accent:[1,3]},
+  {sig:'3/4',name:'Vals',             desc:'3 pulsos. Danza clásica europea. Sensación de giro.',                   beats:3,accent:[1]},
+  {sig:'2/4',name:'Marcha',           desc:'2 pulsos fuertes. Marchas, polkas, música folclórica.',                 beats:2,accent:[1]},
+  {sig:'6/8',name:'Compás Compuesto', desc:'6 corcheas en 2 grupos de 3. Sensación de balanceo. Jig, barcarola.',  beats:6,accent:[1,4]},
+  {sig:'5/4',name:'Quintuple',        desc:'5 pulsos. "Take Five" (Brubeck). Asimétrico, moderno.',                beats:5,accent:[1,3]},
+  {sig:'7/8',name:'Septuple',         desc:'7 corcheas. Música balcánica, math rock. Muy complejo.',               beats:7,accent:[1,3,5]},
+];
+const RHYTHM_PATTERNS=[
+  {name:'Síncopa básica',    pattern:[0,1,1,0,1,1,1,0], desc:'Acento en el contratéimpo. Esencial en jazz y latin.'},
+  {name:'Clave 3-2',         pattern:[1,0,0,1,0,1,0,0,1,0,1,0,0,0,0,0], desc:'El ritmo fundamental de la música afrocubana y salsa.'},
+  {name:'Cinquillo',         pattern:[1,0,1,1,0,1,1,0], desc:'Patrón cubano, 5 notas en 8 corcheas. Muy rítmico.'},
+  {name:'Habanera',          pattern:[1,0,0,1,1,0,1,0], desc:'Ritmo de tango y habanera. Base de muchos estilos latinos.'},
+  {name:'Tresillo',          pattern:[1,0,0,1,0,0,1,0], desc:'3 notas equidistantes en 8 corcheas. Base del reggaetón.'},
+  {name:'Charleston',        pattern:[1,0,1,0,0,1,0,0], desc:'Jazz de los años 20. Acento en 1 y la "y" del 2.'},
+];
+function buildRhythm(){
+  const cont=document.getElementById('rhythm-rows');
+  RHYTHM_FIGURES.forEach(f=>{
+    const d=document.createElement('div');d.className='rhythm-row';
+    const subdots=Array.from({length:Math.min(f.subdiv*4,8)},(_,i)=>`<div class="rhythm-sub-dot${i===0?' filled':''}"></div>`).join('');
+    d.innerHTML=`<div class="rhythm-figure">${f.sym}</div>
+      <div style="flex:1">
+        <div class="flex items-center gap-3">
+          <span class="rhythm-name">${f.name}</span>
+          <span class="rhythm-beats">${f.beats} tiempo${f.beats!==1?'s':''}</span>
+          <span class="rhythm-fraction">${f.fraction}</span>
+        </div>
+        <div class="rhythm-bar mt-1"><div class="rhythm-fill" style="width:${f.fill}%"></div></div>
+        <div style="font-size:0.54rem;color:rgba(245,236,215,0.28);margin-top:2px">${f.desc}</div>
+      </div>`;
+    cont.appendChild(d);
+  });
+  // Time signatures
+  const tsg=document.getElementById('time-sig-grid');
+  TIME_SIGS.forEach(ts=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:rgba(20,16,8,0.8);border:1px solid rgba(201,168,76,0.12);border-radius:3px;padding:0.75rem';
+    const beats=Array.from({length:ts.beats},(_,i)=>{
+      const isAcc=ts.accent.includes(i+1);
+      return `<div style="width:${isAcc?14:10}px;height:${isAcc?14:10}px;border-radius:50%;background:${isAcc?'var(--gold)':'rgba(201,168,76,0.2)'};border:1px solid rgba(201,168,76,0.3);display:inline-block;margin:1px;${isAcc?'box-shadow:0 0 5px rgba(201,168,76,0.4)':''}"></div>`;
+    }).join('');
+    card.innerHTML=`<div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold-light);font-weight:700">${ts.sig}</div>
+      <div style="font-family:'Cinzel',serif;font-size:0.7rem;color:var(--gold);margin:2px 0">${ts.name}</div>
+      <div style="margin:0.4rem 0">${beats}</div>
+      <div style="font-size:0.58rem;color:rgba(245,236,215,0.3)">${ts.desc}</div>`;
+    tsg.appendChild(card);
+  });
+  // Patterns
+  const rp=document.getElementById('rhythm-patterns');
+  RHYTHM_PATTERNS.forEach(pat=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:rgba(20,16,8,0.8);border:1px solid rgba(201,168,76,0.12);border-radius:3px;padding:0.75rem';
+    const dots=pat.pattern.map(v=>`<div style="width:12px;height:12px;border-radius:50%;background:${v?'var(--gold)':'rgba(201,168,76,0.1)'};border:1px solid rgba(201,168,76,${v?'0.5':'0.2'});display:inline-block;margin:1px;${v?'box-shadow:0 0 4px rgba(201,168,76,0.3)':''}"></div>`).join('');
+    card.innerHTML=`<div style="font-family:'Cinzel',serif;font-size:0.78rem;color:var(--gold-light);font-weight:600">${pat.name}</div>
+      <div style="margin:0.4rem 0">${dots}</div>
+      <div style="font-size:0.58rem;color:rgba(245,236,215,0.3)">${pat.desc}</div>`;
+    rp.appendChild(card);
+  });
+}
+buildRhythm();
+
+// ═══════════ ROADMAP ═══════════
+const RM_KEY='musica_roadmap_v1';
+let rmState=JSON.parse(localStorage.getItem(RM_KEY)||'{}');
+const ROADMAP=[
+  {level:'PRINCIPIANTE',badge:'level-0',color:'#7dc87d',items:[
+    {id:'p01',text:'<strong>Escala cromática</strong> — memoriza las 12 notas y sus nombres'},
+    {id:'p02',text:'<strong>Cifrado inglés</strong> — C D E F G A B y sus sostenidos'},
+    {id:'p03',text:'<strong>Escala de Do mayor</strong> (C) — de memoria en ambas direcciones'},
+    {id:'p04',text:'<strong>Figuras rítmicas</strong> — redonda, blanca, negra, corchea'},
+    {id:'p05',text:'<strong>Compás 4/4</strong> — contar y marcar el pulso con metrónomo a ♩=60'},
+    {id:'p06',text:'<strong>Ejercicio 1</strong> — DO–MI–RE–FA a ♩=40 redondas'},
+    {id:'p07',text:'<strong>Ejercicio 2</strong> — DO–FA–RE–SOL a ♩=40'},
+    {id:'p08',text:'<strong>Intervalos básicos</strong> — unísono, 2ª, 3ª, 4ª, 5ª, octava'},
+    {id:'p09',text:'<strong>Escala de Sol mayor</strong> (G) — identificar el F#'},
+    {id:'p10',text:'<strong>Cadencia auténtica</strong> — reconocer V–I auditivamente'},
+  ]},
+  {level:'ELEMENTAL',badge:'level-1',color:'#80a8e0',items:[
+    {id:'e01',text:'<strong>Escalas mayores con 1–2 alteraciones</strong> — G, D, F, Bb'},
+    {id:'e02',text:'<strong>Escala menor natural</strong> — La menor (Am) completa'},
+    {id:'e03',text:'<strong>Acorde mayor</strong> — estructura 1–3–5 en todas las tónicas'},
+    {id:'e04',text:'<strong>Acorde menor</strong> — estructura 1–♭3–5'},
+    {id:'e05',text:'<strong>Progresión I–IV–V–I</strong> en Do mayor'},
+    {id:'e06',text:'<strong>Compases 3/4 y 2/4</strong> — vals y marcha'},
+    {id:'e07',text:'<strong>Ejercicios 3–5</strong> a negras con metrónomo ♩=60'},
+    {id:'e08',text:'<strong>Todos los intervalos</strong> — 13 intervalos de memoria'},
+    {id:'e09',text:'<strong>Cadencias plagal y semi-cadencia</strong>'},
+    {id:'e10',text:'<strong>Círculo de quintas</strong> — sentido horario (sostenidos)'},
+    {id:'e11',text:'<strong>Lectura rítmica</strong> — semicorcheas en 4/4'},
+    {id:'e12',text:'<strong>Modo Jónico y Eólico</strong> — relación mayor/menor'},
+  ]},
+  {level:'INTERMEDIO',badge:'level-2',color:'#e8c96a',items:[
+    {id:'i01',text:'<strong>Las 12 escalas mayores</strong> — todas de memoria'},
+    {id:'i02',text:'<strong>Escalas menores armónica y melódica</strong>'},
+    {id:'i03',text:'<strong>Los 7 modos griegos</strong> — fórmulas y características'},
+    {id:'i04',text:'<strong>Acordes de 7ª</strong> — maj7, m7, dom7, m7b5'},
+    {id:'i05',text:'<strong>Progresión ii–V–I</strong> — en todas las tonalidades'},
+    {id:'i06',text:'<strong>Círculo de quintas completo</strong> — mayor y menor, #/♭'},
+    {id:'i07',text:'<strong>Compás 6/8</strong> — diferencia entre ternario y compuesto'},
+    {id:'i08',text:'<strong>Síncopa y contratiempo</strong> — lectura y ejecución'},
+    {id:'i09',text:'<strong>Todas las cadencias</strong> — auténtica, plagal, engañosa, frigia'},
+    {id:'i10',text:'<strong>Acordes de 9ª</strong> — maj9, dom9, add9'},
+    {id:'i11',text:'<strong>Transposición</strong> — transponer una melodía a otra tonalidad'},
+    {id:'i12',text:'<strong>Análisis armónico básico</strong> — identificar función de acordes'},
+    {id:'i13',text:'<strong>Velocidad ♩=100</strong> en todos los ejercicios'},
+  ]},
+  {level:'AVANZADO',badge:'level-3',color:'#e08080',items:[
+    {id:'a01',text:'<strong>Modulación diatónica</strong> — cambio de tonalidad a tónica relativa'},
+    {id:'a02',text:'<strong>Modulación cromática</strong> — pivot chord y modulación directa'},
+    {id:'a03',text:'<strong>Contrapunto a 2 voces</strong> — 1ª y 2ª especie (Fux)'},
+    {id:'a04',text:'<strong>Análisis schenkériano básico</strong> — capas estructurales'},
+    {id:'a05',text:'<strong>Acordes alterados</strong> — V7b9, V7#11, V7b13'},
+    {id:'a06',text:'<strong>Escalas bebop</strong> — mayor, menor, dominante'},
+    {id:'a07',text:'<strong>Polirritmo</strong> — 3 contra 2, 4 contra 3'},
+    {id:'a08',text:'<strong>Compases irregulares</strong> — 5/4, 7/8, 11/8'},
+    {id:'a09',text:'<strong>Armonía modal</strong> — composición en un modo'},
+    {id:'a10',text:'<strong>Forma sonata</strong> — exposición, desarrollo, recapitulación'},
+    {id:'a11',text:'<strong>Cadena de quintas</strong> — modulaciones sucesivas'},
+    {id:'a12',text:'<strong>Velocidad ♩=140</strong> en todos los ejercicios con precisión'},
+    {id:'a13',text:'<strong>Dictado melódico</strong> — transcribir melodías al oído'},
+    {id:'a14',text:'<strong>Análisis de obra completa</strong> — Bach Invención o Mozart Sonata'},
+  ]},
+];
+function buildRoadmap(){
+  const cont=document.getElementById('roadmap-levels');cont.innerHTML='';
+  let totalItems=0,totalDone=0;
+  ROADMAP.forEach((lvl,li)=>{
+    const done=lvl.items.filter(it=>rmState[it.id]).length;
+    const pct=Math.round(done/lvl.items.length*100);
+    totalItems+=lvl.items.length;totalDone+=done;
+    const section=document.createElement('div');section.className='roadmap-level';
+    section.style.borderColor=lvl.color+'30';
+    const itemsHtml=lvl.items.map(it=>{
+      const isDone=!!rmState[it.id];
+      return `<div class="roadmap-item${isDone?' checked':''}" onclick="toggleRmItem('${it.id}',this)">
+        <div class="roadmap-check${isDone?' done':''}">${isDone?'<span style="font-size:0.7rem;color:#7dc87d">✓</span>':''}</div>
+        <div class="roadmap-item-text">${it.text}</div>
+      </div>`;
+    }).join('');
+    section.innerHTML=`
+      <div class="roadmap-level-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <span class="level-badge ${lvl.badge}">${lvl.level}</span>
+        <span style="font-family:'Cinzel',serif;font-size:0.7rem;color:var(--gold-light);flex:1">${lvl.items.length} temas</span>
+        <span style="font-size:0.65rem;color:rgba(201,168,76,0.6)">${done}/${lvl.items.length}</span>
+      </div>
+      <div class="roadmap-level-body">
+        <div class="roadmap-progress-bar"><div class="roadmap-progress-fill" style="width:${pct}%;background:${lvl.color}"></div></div>
+        <div class="roadmap-pct">${pct}% completado</div>
+        <div class="mt-3">${itemsHtml}</div>
+      </div>`;
+    cont.appendChild(section);
+  });
+  const gPct=Math.round(totalDone/totalItems*100);
+  document.getElementById('rm-total-pct').textContent=gPct+'%';
+}
+function toggleRmItem(id,row){
+  rmState[id]=!rmState[id];
+  localStorage.setItem(RM_KEY,JSON.stringify(rmState));
+  buildRoadmap();
+}
+function clearRoadmap(){if(!confirm('¿Reiniciar todo el progreso del roadmap?'))return;rmState={};localStorage.removeItem(RM_KEY);buildRoadmap();}
+buildRoadmap();
+
+// ═══════════ INIT ═══════════
+updateNavDots();
 </script>
-
 </body>
 </html>
