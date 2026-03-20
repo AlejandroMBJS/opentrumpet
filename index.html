@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teoría Musical</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@300;400;600&family=Cinzel:wght@400;600;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C96A;
+      --cream: #F5ECD7;
+      --dark: #0D0B07;
+      --dark2: #161209;
+      --dark3: #1E1810;
+      --accent: #8B1A1A;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background-color: var(--dark);
+      color: var(--cream);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Staff lines background */
+    .staff-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .staff-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 28px,
+        rgba(201,168,76,0.06) 28px,
+        rgba(201,168,76,0.06) 29px,
+        transparent 29px,
+        transparent 34px,
+        rgba(201,168,76,0.06) 34px,
+        rgba(201,168,76,0.06) 35px,
+        transparent 35px,
+        transparent 40px,
+        rgba(201,168,76,0.06) 40px,
+        rgba(201,168,76,0.06) 41px,
+        transparent 41px,
+        transparent 46px,
+        rgba(201,168,76,0.06) 46px,
+        rgba(201,168,76,0.06) 47px,
+        transparent 47px,
+        transparent 52px,
+        rgba(201,168,76,0.06) 52px,
+        rgba(201,168,76,0.06) 53px,
+        transparent 53px,
+        transparent 120px
+      );
+    }
+    .staff-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(139,26,26,0.07) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.05) 0%, transparent 50%);
+    }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Hero */
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, #a07030 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .hero-subtitle {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      color: rgba(245,236,215,0.45);
+      letter-spacing: 0.25em;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--gold), transparent);
+      margin: 0.5rem 0;
+      opacity: 0.5;
+    }
+
+    /* Section Cards */
+    .card {
+      background: linear-gradient(135deg, rgba(30,24,16,0.9) 0%, rgba(20,16,8,0.95) 100%);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--gold), transparent);
+    }
+
+    .card-corner {
+      position: absolute;
+      width: 14px; height: 14px;
+      border-color: var(--gold);
+      opacity: 0.5;
+    }
+    .card-corner.tl { top: 6px; left: 6px; border-top: 1px solid; border-left: 1px solid; }
+    .card-corner.tr { top: 6px; right: 6px; border-top: 1px solid; border-right: 1px solid; }
+    .card-corner.bl { bottom: 6px; left: 6px; border-bottom: 1px solid; border-left: 1px solid; }
+    .card-corner.br { bottom: 6px; right: 6px; border-bottom: 1px solid; border-right: 1px solid; }
+
+    .section-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      color: var(--gold-light);
+      letter-spacing: 0.08em;
+    }
+
+    /* Note pills */
+    .note-pill {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba(201,168,76,0.08);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 2px;
+      padding: 0.35rem 0.6rem;
+      min-width: 52px;
+      transition: all 0.2s ease;
+      cursor: default;
+    }
+    .note-pill:hover {
+      background: rgba(201,168,76,0.18);
+      border-color: rgba(201,168,76,0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(201,168,76,0.15);
+    }
+    .note-pill .note-name {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--cream);
+    }
+    .note-pill .note-pos {
+      font-size: 0.6rem;
+      color: var(--gold);
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0.9;
+    }
+    .note-pill.sharp .note-name { color: var(--gold-light); }
+    .note-pill.sharp { border-color: rgba(201,168,76,0.4); }
+
+    /* Cifrado pills */
+    .cifrado-pair {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .note-es {
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      color: var(--cream);
+    }
+    .note-en {
+      font-size: 0.7rem;
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* Exercise items */
+    .exercise-item {
+      border-left: 2px solid rgba(201,168,76,0.3);
+      padding-left: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .exercise-item:hover {
+      border-left-color: var(--gold);
+      background: rgba(201,168,76,0.04);
+    }
+    .exercise-item .ex-number {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      color: var(--gold);
+      letter-spacing: 0.2em;
+    }
+    .exercise-notes {
+      font-size: 0.72rem;
+      line-height: 1.8;
+      color: rgba(245,236,215,0.75);
+      word-break: break-word;
+    }
+    .exercise-notes .n {
+      display: inline-block;
+      background: rgba(201,168,76,0.08);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 2px;
+      padding: 0 4px;
+      margin: 1px;
+      color: var(--cream);
+      font-size: 0.7rem;
+      transition: background 0.15s;
+    }
+    .exercise-notes .n.s {
+      color: var(--gold-light);
+      background: rgba(201,168,76,0.13);
+      border-color: rgba(201,168,76,0.3);
+    }
+    .exercise-notes .dash {
+      opacity: 0.3;
+      margin: 0 1px;
+    }
+
+    /* Scales table */
+    .scale-table {
+      border-collapse: separate;
+      border-spacing: 3px;
+      width: 100%;
+    }
+    .scale-table th {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      padding: 0.4rem 0.5rem;
+      text-align: center;
+      background: rgba(201,168,76,0.08);
+      border-bottom: 1px solid rgba(201,168,76,0.2);
+    }
+    .scale-table td {
+      font-size: 0.72rem;
+      padding: 0.3rem 0.4rem;
+      text-align: center;
+      background: rgba(30,24,16,0.6);
+      transition: all 0.15s;
+      border: 1px solid rgba(201,168,76,0.08);
+    }
+    .scale-table td:first-child {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      color: var(--gold-light);
+      background: rgba(201,168,76,0.1);
+      border-color: rgba(201,168,76,0.2);
+    }
+    .scale-table td.sharp-cell {
+      color: var(--gold);
+    }
+    .scale-table tr:hover td {
+      background: rgba(201,168,76,0.07);
+    }
+
+    /* Interval row */
+    .interval-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 1rem;
+    }
+    .interval-box {
+      flex: 1;
+      text-align: center;
+      padding: 0.3rem 0.1rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--gold);
+      border-top: 1px solid rgba(201,168,76,0.3);
+      border-bottom: 1px solid rgba(201,168,76,0.3);
+      background: rgba(201,168,76,0.06);
+    }
+    .interval-box:first-child { border-left: 1px solid rgba(201,168,76,0.3); }
+    .interval-box:last-child { border-right: 1px solid rgba(201,168,76,0.3); }
+
+    /* Tempo badge */
+    .tempo-badge {
+      display: inline-block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid rgba(201,168,76,0.3);
+      color: rgba(201,168,76,0.7);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tempo-badge:hover, .tempo-badge.active {
+      background: rgba(201,168,76,0.15);
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+
+    /* Ornament */
+    .ornament {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      opacity: 0.4;
+    }
+    .ornament-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--gold));
+    }
+    .ornament-line.rev {
+      background: linear-gradient(to left, transparent, var(--gold));
+    }
+    .ornament-diamond {
+      width: 6px; height: 6px;
+      background: var(--gold);
+      transform: rotate(45deg);
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .delay-3 { animation-delay: 0.35s; opacity: 0; }
+    .delay-4 { animation-delay: 0.5s; opacity: 0; }
+    .delay-5 { animation-delay: 0.65s; opacity: 0; }
+
+    @keyframes shimmer {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+    .shimmer { animation: shimmer 3s ease infinite; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--dark); }
+    ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+
+    /* Speed exercises */
+    .speed-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(201,168,76,0.07);
+    }
+    .speed-icon { font-size: 1rem; opacity: 0.6; }
+    .speed-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      color: var(--gold);
+      min-width: 90px;
+    }
+    .speed-dots {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+    .speed-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.3);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .speed-dot.active, .speed-dot:hover {
+      background: var(--gold);
+      box-shadow: 0 0 6px rgba(201,168,76,0.4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="staff-bg"></div>
+
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <div class="text-center mb-12 fade-up delay-1">
+    <div class="hero-subtitle text-xs mb-4 tracking-widest">✦ MÉTODO DE ESTUDIO ✦</div>
+    <h1 class="hero-title text-5xl md:text-7xl mb-3">TEORÍA<br>MUSICAL</h1>
+    <div class="ornament my-4">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line rev"></div>
+    </div>
+    <p class="hero-subtitle text-sm">Escalas · Cifrados · Ejercicios · Velocidad</p>
+  </div>
+
+  <!-- ESCALA CROMÁTICA -->
+  <div class="card p-6 mb-6 fade-up delay-2">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+
+    <div class="section-label mb-1">§ 01</div>
+    <h2 class="section-title text-xl mb-4">Escala Cromática</h2>
+    <div class="divider mb-5"></div>
+
+    <!-- Full chromatic -->
+    <div class="mb-5">
+      <div class="text-xs text-gold opacity-60 mb-2 tracking-widest" style="color:var(--gold)">ESCALA COMPLETA</div>
+      <div class="flex flex-wrap gap-2">
+        <div class="note-pill"><span class="note-name">DO</span><span class="note-pos">0</span></div>
+        <div class="note-pill sharp"><span class="note-name">DO#</span><span class="note-pos">1·2·3</span></div>
+        <div class="note-pill"><span class="note-name">RE</span><span class="note-pos">1·3</span></div>
+        <div class="note-pill sharp"><span class="note-name">RE#</span><span class="note-pos">2·3</span></div>
+        <div class="note-pill"><span class="note-name">MI</span><span class="note-pos">1·2</span></div>
+        <div class="note-pill"><span class="note-name">FA</span><span class="note-pos">1</span></div>
+        <div class="note-pill sharp"><span class="note-name">FA#</span><span class="note-pos">2</span></div>
+        <div class="note-pill"><span class="note-name">SOL</span><span class="note-pos">0</span></div>
+        <div class="note-pill sharp"><span class="note-name">SOL#</span><span class="note-pos">2·3</span></div>
+        <div class="note-pill"><span class="note-name">LA</span><span class="note-pos">1·2</span></div>
+        <div class="note-pill sharp"><span class="note-name">LA#</span><span class="note-pos">1</span></div>
+        <div class="note-pill"><span class="note-name">SI</span><span class="note-pos">2</span></div>
+      </div>
+    </div>
+
+    <div class="divider mb-5" style="opacity:0.2"></div>
+
+    <!-- Octave -->
+    <div>
+      <div class="text-xs opacity-60 mb-2 tracking-widest" style="color:var(--gold)">OCTAVA</div>
+      <div class="flex flex-wrap gap-2">
+        <div class="note-pill"><span class="note-name">DO</span><span class="note-pos">0</span></div>
+        <div class="note-pill sharp"><span class="note-name">DO#</span><span class="note-pos">1·2</span></div>
+        <div class="note-pill"><span class="note-name">RE</span><span class="note-pos">1</span></div>
+        <div class="note-pill sharp"><span class="note-name">RE#</span><span class="note-pos">2</span></div>
+        <div class="note-pill"><span class="note-name">MI</span><span class="note-pos">0</span></div>
+        <div class="note-pill"><span class="note-name">FA</span><span class="note-pos">1</span></div>
+        <div class="note-pill sharp"><span class="note-name">FA#</span><span class="note-pos">2</span></div>
+        <div class="note-pill"><span class="note-name">SOL</span><span class="note-pos">0</span></div>
+        <div class="note-pill sharp"><span class="note-name">SOL#</span><span class="note-pos">2·3</span></div>
+        <div class="note-pill"><span class="note-name">LA</span><span class="note-pos">1·2</span></div>
+        <div class="note-pill sharp"><span class="note-name">LA#</span><span class="note-pos">1</span></div>
+        <div class="note-pill"><span class="note-name">SI</span><span class="note-pos">2</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CIFRADOS -->
+  <div class="card p-6 mb-6 fade-up delay-3">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+
+    <div class="section-label mb-1">§ 02</div>
+    <h2 class="section-title text-xl mb-4">Cifrados</h2>
+    <div class="divider mb-5"></div>
+
+    <div class="mb-4">
+      <div class="text-xs opacity-60 mb-3 tracking-widest" style="color:var(--gold)">ESCALA NATURAL</div>
+      <div class="flex flex-wrap gap-4">
+        <div class="cifrado-pair"><span class="note-es">DO</span><span class="note-en">C</span></div>
+        <div class="cifrado-pair"><span class="note-es">RE</span><span class="note-en">D</span></div>
+        <div class="cifrado-pair"><span class="note-es">MI</span><span class="note-en">E</span></div>
+        <div class="cifrado-pair"><span class="note-es">FA</span><span class="note-en">F</span></div>
+        <div class="cifrado-pair"><span class="note-es">SOL</span><span class="note-en">G</span></div>
+        <div class="cifrado-pair"><span class="note-es">LA</span><span class="note-en">A</span></div>
+        <div class="cifrado-pair"><span class="note-es">SI</span><span class="note-en">B</span></div>
+        <div class="cifrado-pair"><span class="note-es">DO</span><span class="note-en">C</span></div>
+      </div>
+    </div>
+
+    <div class="divider mb-4" style="opacity:0.15"></div>
+
+    <div>
+      <div class="text-xs opacity-60 mb-3 tracking-widest" style="color:var(--gold)">SOSTENIDOS / ALTERACIONES</div>
+      <div class="flex flex-wrap gap-4">
+        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">DO#</span><span class="note-en">C#</span></div>
+        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">RE#</span><span class="note-en">D#</span></div>
+        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">FA#</span><span class="note-en">F#</span></div>
+        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">SOL#</span><span class="note-en">G#</span></div>
+        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">LA#</span><span class="note-en">A#</span></div>
+        <div class="cifrado-pair"><span class="note-es" style="color:var(--gold-light)">DO#</span><span class="note-en">B#</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EJERCICIOS -->
+  <div class="card p-6 mb-6 fade-up delay-4">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+
+    <div class="section-label mb-1">§ 03</div>
+    <h2 class="section-title text-xl mb-2">Ejercicios</h2>
+    <p class="text-xs mb-4" style="color:rgba(245,236,215,0.35); font-style:italic">Ensayar con redonda → blanca → negra → corchea → semicorchea</p>
+
+    <!-- Tempo selector -->
+    <div class="flex flex-wrap gap-2 mb-5">
+      <span class="tempo-badge active" onclick="setTempo(this,'♩ = Redonda')">♩ REDONDA</span>
+      <span class="tempo-badge" onclick="setTempo(this,'𝅗𝅥 = Blanca')">𝅗 BLANCA</span>
+      <span class="tempo-badge" onclick="setTempo(this,'♩ = Negra')">♩ NEGRA</span>
+      <span class="tempo-badge" onclick="setTempo(this,'♪ = Corchea')">♪ CORCHEA</span>
+      <span class="tempo-badge" onclick="setTempo(this,'𝅘𝅥𝅯 = Semicorchea')">𝅘 SEMI</span>
+    </div>
+
+    <div class="divider mb-5"></div>
+
+    <div class="flex flex-col gap-4" id="exercises">
+    </div>
+  </div>
+
+  <!-- ESCALAS -->
+  <div class="card p-6 mb-6 fade-up delay-5">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+
+    <div class="section-label mb-1">§ 04</div>
+    <h2 class="section-title text-xl mb-2">Escalas Mayores</h2>
+    <p class="text-xs mb-4" style="color:rgba(245,236,215,0.35)">Fórmula: Tono – Tono – Semitono – Tono – Tono – Tono – Semitono</p>
+
+    <!-- Interval legend -->
+    <div class="interval-row mb-5">
+      <div class="interval-box">T</div>
+      <div class="interval-box">T</div>
+      <div class="interval-box">½</div>
+      <div class="interval-box">T</div>
+      <div class="interval-box">T</div>
+      <div class="interval-box">T</div>
+      <div class="interval-box">½</div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="scale-table">
+        <thead>
+          <tr>
+            <th>TÓNICA</th>
+            <th>II</th>
+            <th>III</th>
+            <th>IV</th>
+            <th>V</th>
+            <th>VI</th>
+            <th>VII</th>
+            <th>VIII</th>
+          </tr>
+        </thead>
+        <tbody id="scaleTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VELOCIDAD -->
+  <div class="card p-6 mb-6 fade-up delay-5">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+
+    <div class="section-label mb-1">§ 05</div>
+    <h2 class="section-title text-xl mb-2">Ejercicios para Velocidad</h2>
+    <p class="text-xs mb-5" style="color:rgba(245,236,215,0.35)">Marca tu progreso — haz clic en los puntos para registrar tu nivel</p>
+    <div class="divider mb-5"></div>
+
+    <div id="speedExercises"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="text-center mt-12 fade-up delay-5">
+    <div class="ornament mb-4">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond shimmer"></div>
+      <div class="ornament-line rev"></div>
+    </div>
+    <p class="text-xs tracking-widest" style="color:rgba(201,168,76,0.3); font-family:'Cinzel',serif">
+      PRACTICA · PERSISTE · PERFECCIONA
+    </p>
+  </div>
+
+</div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────────────────────────
+  const exercises = [
+    "DO – MI – RE – FA – MI – SOL – FA – LA – SOL – SI – LA – DO – SI – RE – DO – MI",
+    "DO – FA – RE – SOL – MI – LA – FA – SI – SOL – DO – LA – RE – SI – MI – DO – FA",
+    "DO – SOL – RE – LA – MI – SI – FA – DO – SOL – RE – LA – MI – SI – FA – DO – SOL",
+    "DO – LA – RE – SI – MI – DO – FA – RE – SOL – MI – LA – FA – SI – SOL – DO – LA",
+    "DO – RE – DO – MI – DO – FA – DO – SOL – DO – LA – DO – SI – DO – DO",
+    "RE – MI – RE – FA – RE – SOL – RE – LA – RE – SI – RE – DO",
+    "MI – FA – MI – SOL – MI – LA – MI – SI – MI – DO – MI – RE – MI – MI",
+    "SI – LA – SI – SOL – SI – FA – SI – MI – SI – RE – SI – DO",
+    "DO – RE – DO – RE – MI – DO – RE – MI – FA – DO – RE – MI – FA – SOL – DO – RE – MI – FA – SOL – LA – DO – RE – MI – FA – SOL – LA – SI – DO – RE – MI – FA – SOL – LA – SI – DO"
+  ];
+
+  const scales = [
+    ["C",  "D",  "E",  "F",  "G",  "A",  "B",  "C"],
+    ["C#", "D#", "Eb", "F#", "G#", "A#", "C",  "C#"],
+    ["Db", "D",  "E",  "F#", "G",  "A",  "B",  "C#"],
+    ["D",  "D#", "F",  "G",  "G#", "A#", "C",  "D"],
+    ["D#", "E",  "F#", "G#", "A",  "B",  "C#", "D#"],
+    ["E",  "F",  "F#", "G#", "A#", "B",  "C#", "D#"],
+    ["F",  "F#", "G",  "A",  "B",  "C",  "D#", "E"],
+    ["F#", "G",  "G#", "A#", "C",  "C#", "D#", "F"],
+    ["G",  "G#", "A",  "B",  "C#", "D",  "E",  "F#"],
+    ["G#", "A",  "A#", "C",  "D",  "D#", "F",  "G"],
+    ["A",  "A#", "B",  "C#", "D#", "E",  "F#", "G#"],
+    ["A#", "B",  "C",  "D",  "D#", "F",  "G",  "A"],
+    ["B",  "–",  "–",  "–",  "–",  "–",  "–",  "–"],
+  ];
+
+  const speedLevels = [
+    { label: "♩ = 40",  icon: "🐢" },
+    { label: "♩ = 60",  icon: "🚶" },
+    { label: "♩ = 80",  icon: "🏃" },
+    { label: "♩ = 100", icon: "🚴" },
+    { label: "♩ = 120", icon: "🚗" },
+    { label: "♩ = 140", icon: "✈️" },
+  ];
+
+  // ── RENDER EXERCISES ─────────────────────────────────────────────────────
+  const sharps = new Set(['DO#','RE#','FA#','SOL#','LA#','MI#','SI#']);
+
+  function renderNotes(line) {
+    return line.split(' – ').map((n, i, arr) => {
+      const isSharp = sharps.has(n);
+      const cls = isSharp ? 'n s' : 'n';
+      return `<span class="${cls}">${n}</span>${i < arr.length - 1 ? '<span class="dash">–</span>' : ''}`;
+    }).join('');
+  }
+
+  const exContainer = document.getElementById('exercises');
+  exercises.forEach((ex, i) => {
+    const div = document.createElement('div');
+    div.className = 'exercise-item';
+    div.innerHTML = `
+      <div class="ex-number mb-1">EJERCICIO · ${String(i+1).padStart(2,'0')}</div>
+      <div class="exercise-notes">${renderNotes(ex)}</div>
+    `;
+    exContainer.appendChild(div);
+  });
+
+  // ── RENDER SCALES ─────────────────────────────────────────────────────────
+  const tbody = document.getElementById('scaleTable');
+  scales.forEach(row => {
+    const tr = document.createElement('tr');
+    row.forEach((cell, i) => {
+      const td = document.createElement('td');
+      td.textContent = cell;
+      if (cell.includes('#') || cell.includes('b')) td.className = 'sharp-cell';
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  // ── RENDER SPEED ──────────────────────────────────────────────────────────
+  const speedContainer = document.getElementById('speedExercises');
+  speedLevels.forEach((lvl, i) => {
+    const div = document.createElement('div');
+    div.className = 'speed-row';
+    const dots = Array.from({length: 8}, (_, j) => `
+      <div class="speed-dot" data-row="${i}" data-col="${j}" onclick="toggleDot(this)"></div>
+    `).join('');
+    div.innerHTML = `
+      <span class="speed-icon">${lvl.icon}</span>
+      <span class="speed-label">${lvl.label}</span>
+      <div class="speed-dots">${dots}</div>
+    `;
+    speedContainer.appendChild(div);
+  });
+
+  function toggleDot(el) {
+    const row = el.dataset.row;
+    const col = parseInt(el.dataset.col);
+    const dots = document.querySelectorAll(`.speed-dot[data-row="${row}"]`);
+    const currentActive = Array.from(dots).filter(d => d.classList.contains('active')).length;
+    const clickedCol = col;
+    dots.forEach((d, j) => {
+      d.classList.toggle('active', j <= clickedCol);
+    });
+  }
+
+  // ── TEMPO SELECTOR ────────────────────────────────────────────────────────
+  function setTempo(el, label) {
+    document.querySelectorAll('.tempo-badge').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
